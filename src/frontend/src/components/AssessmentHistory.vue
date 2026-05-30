@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { getAssessments } from '../composables/useApi'
 import type { AssessmentHistoryResponse } from '../types'
 
@@ -9,11 +9,14 @@ const props = defineProps<{
 
 const data = ref<AssessmentHistoryResponse | null>(null)
 
-onMounted(async () => {
+async function load() {
   if (props.studentId) {
     try { data.value = await getAssessments(props.studentId) } catch { /* no data yet */ }
   }
-})
+}
+
+onMounted(load)
+watch(() => props.studentId, load)
 
 function trendIcon(t: string) {
   if (t === '上升') return '↗'
@@ -38,6 +41,25 @@ function trendClass(t: string) {
       <span v-for="wp in data.weak_points" :key="wp.knowledge_unit" class="chip chip--orange">
         {{ wp.knowledge_unit }} (avg {{ wp.avg_score }})
       </span>
+    </div>
+
+    <div class="summary-panel glass-card">
+      <div class="summary-col">
+        <span class="summary-label">阶段成长总结</span>
+        <p>{{ data.progress_summary }}</p>
+      </div>
+      <div class="summary-col" v-if="data.improvement_points.length">
+        <span class="summary-label">进步知识点</span>
+        <div class="summary-tags">
+          <span
+            v-for="item in data.improvement_points"
+            :key="item.knowledge_unit"
+            class="chip chip--green"
+          >
+            {{ item.knowledge_unit }}
+          </span>
+        </div>
+      </div>
     </div>
 
     <!-- 评估历史表 -->
@@ -67,6 +89,37 @@ function trendClass(t: string) {
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 14px;
+}
+
+.summary-panel {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.summary-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summary-col p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.summary-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.summary-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .weak-label {
@@ -124,5 +177,11 @@ function trendClass(t: string) {
 .assess-unit {
   font-weight: 600;
   color: var(--text-primary);
+}
+
+@media (max-width: 900px) {
+  .summary-panel {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

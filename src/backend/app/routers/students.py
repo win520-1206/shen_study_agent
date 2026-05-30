@@ -51,6 +51,8 @@ def build_profile(payload: schemas.ProfileBuildRequest, db: Session = Depends(ge
         "resources": result["resources"],
         "study_plan": result["study_plan"],
         "traces": result["traces"],
+        "recommendation_summary": result["recommendation_summary"],
+        "credibility": result["credibility"],
     }
 
 
@@ -91,64 +93,14 @@ def get_dashboard(student_id: int, db: Session = Depends(get_db)):
     if not student.sessions:
         raise HTTPException(status_code=400, detail="Student has no learning sessions yet")
 
-    latest_session = sorted(student.sessions, key=lambda item: item.created_at)[-1]
-    recent_assessments = (
-        db.query(models.AssessmentRecord)
-        .filter(models.AssessmentRecord.student_id == student_id)
-        .order_by(models.AssessmentRecord.created_at.desc())
-        .limit(5)
-        .all()
-    )
-    traces = (
-        db.query(models.AgentTrace)
-        .filter(models.AgentTrace.session_id == latest_session.id)
-        .order_by(models.AgentTrace.created_at.asc())
-        .all()
-    )
-    resources = (
-        db.query(models.GeneratedResource)
-        .filter(models.GeneratedResource.session_id == latest_session.id)
-        .order_by(models.GeneratedResource.created_at.asc())
-        .all()
-    )
-    return {
-        "student": {
-            "id": student.id,
-            "name": student.name,
-            "major": student.major,
-            "target_course": student.target_course,
-            "profile": json.loads(student.profile_json) if student.profile_json else None,
-        },
-        "latest_diagnosis": json.loads(latest_session.diagnosis_json),
-        "latest_plan": json.loads(latest_session.plan_json),
-        "resources": [
-            {
-                "resource_type": resource.resource_type,
-                "title": resource.title,
-                "content": resource.content,
-                "source_refs": json.loads(resource.source_refs),
-            }
-            for resource in resources
-        ],
-        "recent_assessments": [
-            {
-                "knowledge_unit": record.knowledge_unit,
-                "score": record.score,
-                "feedback": record.feedback,
-                "next_recommendation": "保持当前节奏" if record.score >= 80 else f"回到 {record.knowledge_unit}",
-            }
-            for record in recent_assessments
-        ],
-        "traces": [
-            {
-                "agent_name": trace.agent_name,
-                "input_summary": trace.input_summary,
-                "output_summary": trace.output_summary,
-            }
-            for trace in traces
-        ],
-        "updated_at": latest_session.created_at,
-    }
+    orchestrator = LearningOrchestrator(db)
+    return orchestrator.get_dashboard(student_id)
+
+
+@router.get("/overview/summary", response_model=schemas.OverviewSummaryResponse)
+def get_overview_summary(db: Session = Depends(get_db)):
+    orchestrator = LearningOrchestrator(db)
+    return orchestrator.get_overview_summary()
 
 
 @router.get("/kb/modules")

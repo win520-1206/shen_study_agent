@@ -32,6 +32,7 @@ class LearningSession(Base):
     user_input: Mapped[str] = mapped_column(Text, nullable=False)
     diagnosis_json: Mapped[str] = mapped_column(Text, default="{}")
     plan_json: Mapped[str] = mapped_column(Text, default="{}")
+    recommendation_summary: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
 
     student: Mapped["Student"] = relationship(back_populates="sessions")
@@ -72,6 +73,8 @@ class AgentTrace(Base):
     agent_name: Mapped[str] = mapped_column(String(100), nullable=False)
     input_summary: Mapped[str] = mapped_column(Text, nullable=False)
     output_summary: Mapped[str] = mapped_column(Text, nullable=False)
+    decision_reason: Mapped[str] = mapped_column(Text, default="")
+    impact_on_result: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
 
     session: Mapped["LearningSession"] = relationship(back_populates="traces")

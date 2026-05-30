@@ -40,6 +40,11 @@ const props = defineProps<{
             <span class="step-label">\u5b9e\u8df5\u4efb\u52a1</span>
             <p class="task-text">{{ step.practice_task }}</p>
           </div>
+
+          <div class="step-section" v-if="step.rationale">
+            <span class="step-label">为什么先学这一步</span>
+            <p class="rationale-text">{{ step.rationale }}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -144,5 +149,16 @@ const props = defineProps<{
   background: rgba(0, 212, 255, 0.04);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--color-primary);
+}
+
+.rationale-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0;
+  padding: 8px 12px;
+  background: rgba(124, 58, 237, 0.05);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-secondary);
 }
 </style>

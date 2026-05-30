@@ -20,6 +20,8 @@ data = resp.json()
 print(f"画像: {data['student']['profile']}")
 print(f"资源数: {len(data['resources'])}")
 print(f"轨迹数: {len(data['traces'])}")
+print(f"推荐依据: {data['recommendation_summary']}")
+assert data["credibility"]["based_on_kb"] is True
 
 print("\n=== 3. 智能答疑 ===")
 resp = client.post("/api/v1/chat/qa", json={"student_id": student_id, "question": "什么是线性回归"})
@@ -42,6 +44,15 @@ assert resp.status_code == 200
 history = resp.json()
 print(f"记录数: {len(history['records'])}")
 print(f"弱项: {history['weak_points']}")
+print(f"进步点: {history['improvement_points']}")
 print(f"趋势: {history['trend']}")
+print(f"成长总结: {history['progress_summary']}")
+
+print("\n=== 6. 成果看板 ===")
+resp = client.get("/api/v1/overview/summary")
+assert resp.status_code == 200
+overview = resp.json()
+print(f"学生数: {overview['student_count']}")
+print(f"资源统计: {overview['resource_type_stats']}")
 
 print("\n=== 全部测试通过 ===")

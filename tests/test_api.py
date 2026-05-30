@@ -1,4 +1,8 @@
+import sys
+
 from fastapi.testclient import TestClient
+
+sys.path.insert(0, ".")
 
 from src.backend.app.main import app
 
@@ -26,6 +30,8 @@ def test_learning_flow():
     assert len(data["resources"]) >= 5
     assert len(data["traces"]) == 6
     assert "weak_points" in data["student"]["profile"]
+    assert data["recommendation_summary"]
+    assert data["credibility"]["based_on_kb"] is True
 
     assess_resp = client.post(
         "/api/v1/assessment/submit",
@@ -38,6 +44,8 @@ def test_learning_flow():
     dashboard = dashboard_resp.json()
     assert dashboard["student"]["name"] == "张三"
     assert dashboard["resources"][0]["title"]
+    assert dashboard["recommendation_summary"]
+    assert "weak_point_rank" in dashboard
 
     kb_questions_resp = client.get("/api/v1/kb/questions")
     assert kb_questions_resp.status_code == 200
@@ -46,3 +54,8 @@ def test_learning_flow():
     kb_cases_resp = client.get("/api/v1/kb/coding-cases")
     assert kb_cases_resp.status_code == 200
     assert len(kb_cases_resp.json()["coding_cases"]) >= 4
+
+    overview_resp = client.get("/api/v1/overview/summary")
+    assert overview_resp.status_code == 200
+    overview = overview_resp.json()
+    assert overview["student_count"] >= 1

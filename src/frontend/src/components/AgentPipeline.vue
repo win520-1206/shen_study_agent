@@ -45,6 +45,7 @@ function getIcon(name: string): string {
             </div>
             <span class="node-name">{{ getShortName(trace.agent_name) }}</span>
             <span class="node-summary">{{ trace.output_summary.slice(0, 30) }}</span>
+            <span class="node-impact">{{ trace.impact_on_result.slice(0, 18) }}</span>
           </div>
           <div class="pipe-arrow" v-if="idx < traces.length - 1">
             <svg width="32" height="12" viewBox="0 0 32 12">
@@ -71,7 +72,13 @@ function getIcon(name: string): string {
             <span class="trace-tag">\u8f93\u5165</span> {{ trace.input_summary }}
           </div>
           <div class="trace-io">
+            <span class="trace-tag reason">决策</span> {{ trace.decision_reason }}
+          </div>
+          <div class="trace-io">
             <span class="trace-tag out">\u8f93\u51fa</span> {{ trace.output_summary }}
+          </div>
+          <div class="trace-io">
+            <span class="trace-tag impact">影响</span> {{ trace.impact_on_result }}
           </div>
         </div>
       </div>
@@ -136,6 +143,14 @@ function getIcon(name: string): string {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.node-impact {
+  font-size: 10px;
+  color: var(--color-primary);
+  text-align: center;
+  max-width: 110px;
+  line-height: 1.4;
 }
 
 .pipe-arrow {
@@ -214,6 +229,16 @@ function getIcon(name: string): string {
 .trace-tag.out {
   background: rgba(124, 58, 237, 0.12);
   color: var(--color-secondary);
+}
+
+.trace-tag.reason {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--color-lesson);
+}
+
+.trace-tag.impact {
+  background: rgba(0, 212, 255, 0.12);
+  color: var(--color-primary);
 }
 
 @media (max-width: 900px) {

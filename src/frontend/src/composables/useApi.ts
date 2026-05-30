@@ -4,6 +4,8 @@ import type {
   ProfileBuildResponse,
   QAResponse,
   AssessmentHistoryResponse,
+  DashboardResponse,
+  OverviewSummaryResponse,
 } from '../types'
 
 const api = axios.create({
@@ -51,6 +53,18 @@ export async function getAssessments(
   const { data } = await api.get<AssessmentHistoryResponse>(
     `/student/${studentId}/assessments`,
   )
+  return data
+}
+
+export async function getDashboard(
+  studentId: number,
+): Promise<DashboardResponse> {
+  const { data } = await api.get<DashboardResponse>(`/student/${studentId}/dashboard`)
+  return data
+}
+
+export async function getOverviewSummary(): Promise<OverviewSummaryResponse> {
+  const { data } = await api.get<OverviewSummaryResponse>('/overview/summary')
   return data
 }
 

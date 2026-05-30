@@ -45,9 +45,134 @@ class LearningOrchestrator:
         self.path_planner_agent = PathPlannerAgent()
         self.review_agent = ReviewAgent()
 
+    def _build_recommendation_summary(
+        self,
+        profile: dict[str, Any],
+        diagnosis: dict[str, Any],
+        weak_history: list[dict[str, Any]],
+    ) -> str:
+        parts = [
+            f"系统识别你当前的学习目标是“{profile['learning_goal']}”，基础水平为“{profile['prerequisite_level']}”。",
+            f"本轮优先推荐“{diagnosis['priority_modules'][0]}”，重点攻克“{diagnosis['focus_knowledge_unit']}”。",
+        ]
+        if weak_history:
+            top_weak = weak_history[0]
+            parts.append(
+                f"结合历史评估，系统发现你在“{top_weak['knowledge_unit']}”上仍较薄弱，因此提高了相关内容的推荐优先级。"
+            )
+        else:
+            parts.append("当前还没有历史测验记录，因此本轮推荐主要依据你的对话画像和知识库命中结果。")
+        return "".join(parts)
+
+    def _analyze_history(self, student_id: int) -> dict[str, Any]:
+        records = (
+            self.db.query(models.AssessmentRecord)
+            .filter(models.AssessmentRecord.student_id == student_id)
+            .order_by(models.AssessmentRecord.created_at.desc())
+            .all()
+        )
+
+        unit_scores: dict[str, list[int]] = {}
+        for record in records:
+            unit_scores.setdefault(record.knowledge_unit, []).append(record.score)
+
+        weak_points = []
+        improvement_points = []
+        trend_map: dict[str, str] = {}
+        for unit, scores in unit_scores.items():
+            avg = sum(scores) / len(scores)
+            if avg < 70:
+                weak_points.append({"knowledge_unit": unit, "avg_score": round(avg, 1), "attempts": len(scores)})
+            if len(scores) >= 2 and scores[0] > scores[-1]:
+                improvement_points.append({"knowledge_unit": unit, "avg_score": round(avg, 1), "attempts": len(scores)})
+            if len(scores) >= 2:
+                if scores[0] > scores[-1]:
+                    trend_map[unit] = "上升"
+                elif scores[0] < scores[-1]:
+                    trend_map[unit] = "下降"
+                else:
+                    trend_map[unit] = "持平"
+            else:
+                trend_map[unit] = "首次"
+
+        weak_points.sort(key=lambda item: (item["avg_score"], -item["attempts"]))
+        improvement_points.sort(key=lambda item: (-item["attempts"], item["avg_score"]))
+
+        if not records:
+            progress_summary = "当前还没有评估记录，建议先完成一次针对性练习，系统再根据结果动态调整推荐。"
+        elif weak_points:
+            progress_summary = f"最近的学习记录显示，你在“{weak_points[0]['knowledge_unit']}”上仍需重点突破，建议优先完成相关讲义和练习。"
+        elif improvement_points:
+            progress_summary = f"你在“{improvement_points[0]['knowledge_unit']}”上的成绩已有上升趋势，可以逐步把精力转向更高难度任务。"
+        else:
+            progress_summary = "当前评估结果整体稳定，建议保持现有节奏并继续通过练习巩固。"
+
+        return {
+            "records": records,
+            "weak_points": weak_points,
+            "improvement_points": improvement_points,
+            "trend": trend_map,
+            "progress_summary": progress_summary,
+        }
+
+    def _build_overview_summary(self) -> dict[str, Any]:
+        students = self.db.query(models.Student).all()
+        sessions = self.db.query(models.LearningSession).all()
+        resources = self.db.query(models.GeneratedResource).all()
+        assessments = self.db.query(models.AssessmentRecord).all()
+
+        weak_counter: dict[str, int] = {}
+        featured_students = []
+        for student in students:
+            profile = json.loads(student.profile_json) if student.profile_json else {}
+            for weak in profile.get("weak_points", []):
+                weak_counter[weak] = weak_counter.get(weak, 0) + 1
+            if len(featured_students) < 3:
+                featured_students.append(
+                    {
+                        "name": student.name,
+                        "major": student.major,
+                        "goal": profile.get("learning_goal", "未建画像"),
+                        "weak_points": profile.get("weak_points", []),
+                    }
+                )
+
+        resource_counter: dict[str, int] = {}
+        for resource in resources:
+            resource_counter[resource.resource_type] = resource_counter.get(resource.resource_type, 0) + 1
+
+        average_score = round(sum(item.score for item in assessments) / len(assessments), 1) if assessments else 0.0
+        score_bands = {"90+": 0, "70-89": 0, "0-69": 0}
+        for item in assessments:
+            if item.score >= 90:
+                score_bands["90+"] += 1
+            elif item.score >= 70:
+                score_bands["70-89"] += 1
+            else:
+                score_bands["0-69"] += 1
+
+        return {
+            "student_count": len(students),
+            "active_session_count": len(sessions),
+            "most_common_weak_points": [
+                {"knowledge_unit": key, "count": value}
+                for key, value in sorted(weak_counter.items(), key=lambda item: item[1], reverse=True)[:5]
+            ],
+            "resource_type_stats": [
+                {"resource_type": key, "count": value}
+                for key, value in sorted(resource_counter.items(), key=lambda item: item[1], reverse=True)
+            ],
+            "average_score": average_score,
+            "score_band_distribution": [{"label": key, "count": value} for key, value in score_bands.items()],
+            "featured_students": featured_students,
+        }
+
     def run_learning_cycle(self, student: models.Student, message: str) -> dict[str, Any]:
         profile_result = self.profile_agent.run(student.major, message)
-        kb_hits = self.kb_service.search(profile_result.payload["weak_points"])
+        history_analysis = self._analyze_history(student.id)
+        search_terms = list(profile_result.payload["weak_points"])
+        search_terms.extend([item["knowledge_unit"] for item in history_analysis["weak_points"][:2]])
+        kb_hits = self.kb_service.search(search_terms)
         diagnosis_result = self.diagnosis_agent.run(profile_result.payload, kb_hits)
         resource_plan_result = self.resource_planner_agent.run(profile_result.payload, diagnosis_result.payload)
         content_result = self.content_generator_agent.run(
@@ -58,6 +183,17 @@ class LearningOrchestrator:
         )
         path_result = self.path_planner_agent.run(profile_result.payload, diagnosis_result.payload, content_result.payload["resources"])
         review_result = self.review_agent.run(content_result.payload["resources"], kb_hits)
+        recommendation_summary = self._build_recommendation_summary(
+            profile_result.payload,
+            diagnosis_result.payload,
+            history_analysis["weak_points"],
+        )
+        credibility = {
+            "based_on_kb": bool(kb_hits),
+            "reviewed": review_result.payload["passed"],
+            "source_modules": [item["module_id"] for item in kb_hits[:3]],
+            "note": "内容由知识库检索结果驱动，并经过审查智能体做基础完整性校验。",
+        }
 
         student.profile_json = json.dumps(profile_result.payload, ensure_ascii=False)
         session = models.LearningSession(
@@ -65,6 +201,7 @@ class LearningOrchestrator:
             user_input=message,
             diagnosis_json=json.dumps(diagnosis_result.payload, ensure_ascii=False),
             plan_json=json.dumps(path_result.payload["study_plan"], ensure_ascii=False),
+            recommendation_summary=recommendation_summary,
         )
         self.db.add(session)
         self.db.flush()
@@ -94,6 +231,8 @@ class LearningOrchestrator:
                     agent_name=result.name,
                     input_summary=result.input_summary,
                     output_summary=result.output_summary,
+                    decision_reason=result.decision_reason,
+                    impact_on_result=result.impact_on_result,
                 )
             )
 
@@ -107,11 +246,15 @@ class LearningOrchestrator:
             "diagnosis": diagnosis_result.payload,
             "resources": content_result.payload["resources"],
             "study_plan": path_result.payload["study_plan"],
+            "recommendation_summary": recommendation_summary,
+            "credibility": credibility,
             "traces": [
                 {
                     "agent_name": result.name,
                     "input_summary": result.input_summary,
                     "output_summary": result.output_summary,
+                    "decision_reason": result.decision_reason,
+                    "impact_on_result": result.impact_on_result,
                 }
                 for result in [
                     profile_result,
@@ -174,35 +317,8 @@ class LearningOrchestrator:
         }
 
     def get_assessment_history(self, student_id: int) -> dict[str, Any]:
-        records = (
-            self.db.query(models.AssessmentRecord)
-            .filter(models.AssessmentRecord.student_id == student_id)
-            .order_by(models.AssessmentRecord.created_at.desc())
-            .all()
-        )
-        weak_points = []
-        unit_scores: dict[str, list[int]] = {}
-        for record in records:
-            if record.knowledge_unit not in unit_scores:
-                unit_scores[record.knowledge_unit] = []
-            unit_scores[record.knowledge_unit].append(record.score)
-
-        for unit, scores in unit_scores.items():
-            avg = sum(scores) / len(scores)
-            if avg < 70:
-                weak_points.append({"knowledge_unit": unit, "avg_score": round(avg, 1), "attempts": len(scores)})
-
-        trend_map: dict[str, str] = {}
-        for unit, scores in unit_scores.items():
-            if len(scores) >= 2:
-                if scores[0] > scores[-1]:
-                    trend_map[unit] = "上升"
-                elif scores[0] < scores[-1]:
-                    trend_map[unit] = "下降"
-                else:
-                    trend_map[unit] = "持平"
-            else:
-                trend_map[unit] = "首次"
+        analysis = self._analyze_history(student_id)
+        records = analysis["records"]
 
         return {
             "records": [
@@ -214,8 +330,10 @@ class LearningOrchestrator:
                 }
                 for record in records
             ],
-            "weak_points": weak_points,
-            "trend": trend_map,
+            "weak_points": analysis["weak_points"],
+            "improvement_points": analysis["improvement_points"],
+            "trend": analysis["trend"],
+            "progress_summary": analysis["progress_summary"],
         }
 
     def answer_question(self, student_id: int, question: str) -> dict[str, Any]:
@@ -255,6 +373,8 @@ class LearningOrchestrator:
                     agent_name=result.name,
                     input_summary=result.input_summary,
                     output_summary=result.output_summary,
+                    decision_reason=result.decision_reason,
+                    impact_on_result=result.impact_on_result,
                 )
             )
             self.db.commit()
@@ -266,5 +386,79 @@ class LearningOrchestrator:
                 "agent_name": result.name,
                 "input_summary": result.input_summary,
                 "output_summary": result.output_summary,
+                "decision_reason": result.decision_reason,
+                "impact_on_result": result.impact_on_result,
             },
         }
+
+    def get_dashboard(self, student_id: int) -> dict[str, Any]:
+        student = self.db.get(models.Student, student_id)
+        latest_session = sorted(student.sessions, key=lambda item: item.created_at)[-1]
+        recent_assessments = (
+            self.db.query(models.AssessmentRecord)
+            .filter(models.AssessmentRecord.student_id == student_id)
+            .order_by(models.AssessmentRecord.created_at.desc())
+            .limit(5)
+            .all()
+        )
+        traces = (
+            self.db.query(models.AgentTrace)
+            .filter(models.AgentTrace.session_id == latest_session.id)
+            .order_by(models.AgentTrace.created_at.asc())
+            .all()
+        )
+        resources = (
+            self.db.query(models.GeneratedResource)
+            .filter(models.GeneratedResource.session_id == latest_session.id)
+            .order_by(models.GeneratedResource.created_at.asc())
+            .all()
+        )
+        analysis = self._analyze_history(student_id)
+        return {
+            "student": {
+                "id": student.id,
+                "name": student.name,
+                "major": student.major,
+                "target_course": student.target_course,
+                "profile": json.loads(student.profile_json) if student.profile_json else None,
+            },
+            "latest_diagnosis": json.loads(latest_session.diagnosis_json),
+            "latest_plan": json.loads(latest_session.plan_json),
+            "resources": [
+                {
+                    "resource_type": resource.resource_type,
+                    "title": resource.title,
+                    "content": resource.content,
+                    "source_refs": json.loads(resource.source_refs),
+                }
+                for resource in resources
+            ],
+            "recent_assessments": [
+                {
+                    "knowledge_unit": record.knowledge_unit,
+                    "score": record.score,
+                    "feedback": record.feedback,
+                    "next_recommendation": "保持当前节奏" if record.score >= 80 else f"回到 {record.knowledge_unit}",
+                    "trend": analysis["trend"].get(record.knowledge_unit, "首次"),
+                }
+                for record in recent_assessments
+            ],
+            "traces": [
+                {
+                    "agent_name": trace.agent_name,
+                    "input_summary": trace.input_summary,
+                    "output_summary": trace.output_summary,
+                    "decision_reason": getattr(trace, "decision_reason", ""),
+                    "impact_on_result": getattr(trace, "impact_on_result", ""),
+                }
+                for trace in traces
+            ],
+            "recommendation_summary": latest_session.recommendation_summary or analysis["progress_summary"],
+            "progress_summary": analysis["progress_summary"],
+            "weak_point_rank": analysis["weak_points"][:5],
+            "improvement_rank": analysis["improvement_points"][:5],
+            "updated_at": latest_session.created_at,
+        }
+
+    def get_overview_summary(self) -> dict[str, Any]:
+        return self._build_overview_summary()

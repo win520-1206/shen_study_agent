@@ -20,6 +20,8 @@ class AgentResult:
     input_summary: str
     output_summary: str
     payload: dict[str, Any]
+    decision_reason: str = ""
+    impact_on_result: str = ""
 
 
 class ProfileAgent:
@@ -116,6 +118,8 @@ class ProfileAgent:
             input_summary=f"专业={student_major}; 用户输入={message[:80]}",
             output_summary=f"抽取了8维画像，薄弱点={','.join(weak_points)}",
             payload=profile,
+            decision_reason="根据学生自述中的目标、基础、偏好和关键词提取学习画像，并优先识别薄弱知识点。",
+            impact_on_result=f"决定后续诊断重点、资源风格以及学习路径起点，当前重点为{','.join(weak_points)}。",
         )
 
 
@@ -160,6 +164,8 @@ class DiagnosisAgent:
             input_summary=f"画像薄弱点={profile['weak_points']}; 命中模块={len(kb_hits)}",
             output_summary=f"推荐优先模块={diagnosis['priority_modules'][0]}",
             payload=diagnosis,
+            decision_reason="结合学生目标、基础水平和知识库命中结果，判断当前最该优先攻克的模块与风险点。",
+            impact_on_result=f"决定资源生成聚焦在{diagnosis['focus_knowledge_unit']}，并把{diagnosis['priority_modules'][0]}设为优先模块。",
         )
 
 
@@ -191,6 +197,8 @@ class ResourcePlannerAgent:
             input_summary=f"学习风格={profile['learning_style']}; 当前阶段={diagnosis['current_stage']}",
             output_summary="规划了5类个性化资源",
             payload=plan,
+            decision_reason="根据学习目标、学习风格和当前阶段，确定资源类型、表达语气与难度层级。",
+            impact_on_result=f"最终资源将以{tone}风格呈现，整体难度为{difficulty}。",
         )
 
 
@@ -350,6 +358,8 @@ class ContentGeneratorAgent:
             input_summary=f"重点知识点={diagnosis['focus_knowledge_unit']}; 命中模块={module['module_name']}",
             output_summary=f"完成5类资源生成，风格={style}，目标={goal}，整合了{len(selected_questions)}道题与{1 if selected_case else 0}个代码案例",
             payload={"resources": resources},
+            decision_reason="围绕优先模块、学生目标和基础水平，从知识库中挑选讲义切片、题目与案例进行个性化重组。",
+            impact_on_result=f"生成的讲义、练习、代码案例和任务清单会明显体现{goal}与{style}差异。",
         )
 
 
@@ -367,18 +377,21 @@ class PathPlannerAgent:
                     "objectives": ["识别高频考点", "标注薄弱知识点"],
                     "recommended_resources": [resources[0]["title"], resources[3]["title"]],
                     "practice_task": "完成 4 道强化题，重点记录自己没答到的参考要点",
+                    "rationale": "先建立考点清单和知识框架，避免一上来盲目刷题。",
                 },
                 {
                     "stage": "阶段2：刷题纠错",
                     "objectives": ["巩固易错题型", "掌握评价指标含义"],
                     "recommended_resources": [resources[1]["title"]],
                     "practice_task": "限时完成练习题并整理错题本",
+                    "rationale": "在明确重点后进行针对性练习，更容易快速提分。",
                 },
                 {
                     "stage": "阶段3：案例串联",
                     "objectives": ["理解实验步骤", "应对简答分析题"],
                     "recommended_resources": [resources[2]["title"]],
                     "practice_task": "对照代码案例，口述每一步在做什么以及为什么",
+                    "rationale": "用案例把概念和题目串起来，帮助应对综合题与分析题。",
                 },
             ]
         elif goal == "项目实战":
@@ -388,18 +401,21 @@ class PathPlannerAgent:
                     "objectives": ["了解核心概念", "明确可操作步骤"],
                     "recommended_resources": [resources[0]["title"], resources[3]["title"]],
                     "practice_task": "阅读讲义并标注 3 个最想动手验证的点",
+                    "rationale": "先理解整体原理，再进入实操，能减少只会跑代码不会解释的问题。",
                 },
                 {
                     "stage": "阶段2：跑通案例",
                     "objectives": ["完整执行实验", "理解关键代码逻辑"],
                     "recommended_resources": [resources[2]["title"]],
                     "practice_task": "完整跑通代码案例并记录运行结果",
+                    "rationale": "先获得可运行结果，建立正反馈和项目把控感。",
                 },
                 {
                     "stage": "阶段3：改参实验",
                     "objectives": ["修改参数观察变化", "形成实验报告"],
                     "recommended_resources": [resources[1]["title"]],
                     "practice_task": "修改 1-2 个参数并对比结果差异，写出实验心得",
+                    "rationale": "通过改参和复盘，把会运行升级为会分析和会优化。",
                 },
             ]
         elif prereq == "零基础":
@@ -409,18 +425,21 @@ class PathPlannerAgent:
                     "objectives": ["理解核心概念", "消除术语障碍"],
                     "recommended_resources": [resources[0]["title"], resources[3]["title"]],
                     "practice_task": "用自己的话解释 3 个核心概念",
+                    "rationale": "零基础先建立概念框架，比直接做代码更容易进入状态。",
                 },
                 {
                     "stage": "阶段2：基础练习",
                     "objectives": ["检验理解程度", "积累做题经验"],
                     "recommended_resources": [resources[1]["title"]],
                     "practice_task": "完成概念题，重点理解每个选项背后的道理",
+                    "rationale": "通过低门槛练习确认概念是否真正理解。",
                 },
                 {
                     "stage": "阶段3：初步实操",
                     "objectives": ["跑通基础案例", "感受机器学习流程"],
                     "recommended_resources": [resources[2]["title"]],
                     "practice_task": "跟着代码案例逐步操作，先跑通再说",
+                    "rationale": "在已有基础认知后接触代码，更容易把流程与概念对应起来。",
                 },
             ]
         else:
@@ -430,18 +449,21 @@ class PathPlannerAgent:
                     "objectives": ["理解核心概念", "识别常见误区"],
                     "recommended_resources": [resources[0]["title"], resources[3]["title"]],
                     "practice_task": "完成3道概念题并写出自己的理解",
+                    "rationale": "先建立统一概念基础，后续练习和代码更容易对上知识点。",
                 },
                 {
                     "stage": "阶段2：做练习",
                     "objectives": ["会选模型", "会看评估结果"],
                     "recommended_resources": [resources[1]["title"]],
                     "practice_task": "完成练习题并记录错题原因",
+                    "rationale": "通过练习定位误区，避免只学不练。",
                 },
                 {
                     "stage": "阶段3：做代码",
                     "objectives": ["跑通案例", "解释关键代码"],
                     "recommended_resources": [resources[2]["title"]],
                     "practice_task": "修改代码中的参数并观察结果变化",
+                    "rationale": "最后通过实操把抽象概念转化为可解释的实验体验。",
                 },
             ]
 
@@ -450,6 +472,8 @@ class PathPlannerAgent:
             input_summary=f"学习目标={goal}; 当前阶段={diagnosis['current_stage']}",
             output_summary=f"生成{len(plan)}阶段学习路径，目标类型={goal}",
             payload={"study_plan": plan},
+            decision_reason="结合学生目标与先修基础，把资源组织成由浅入深、由认知到实践的阶段式路径。",
+            impact_on_result=f"最终学习顺序被设计为先解决{diagnosis['focus_knowledge_unit']}，再逐步扩展到完整模块能力。",
         )
 
 
@@ -468,4 +492,6 @@ class ReviewAgent:
             input_summary=f"资源数量={len(resources)}; 参考模块={len(kb_hits)}",
             output_summary=output,
             payload={"passed": not issues, "issues": issues},
+            decision_reason="检查资源数量、来源标注和基础完整性，确认输出不是无依据的裸生成。",
+            impact_on_result="为最终展示补上可信度说明，降低内容缺失和无来源输出的风险。",
         )

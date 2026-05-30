@@ -13,6 +13,8 @@ import StudyPath from './components/StudyPath.vue'
 import QAPanel from './components/QAPanel.vue'
 import AssessmentHistory from './components/AssessmentHistory.vue'
 import AssessmentSubmit from './components/AssessmentSubmit.vue'
+import RecommendationSummary from './components/RecommendationSummary.vue'
+import OverviewPanel from './components/OverviewPanel.vue'
 
 const state = reactive({
   studentId: 0,
@@ -20,6 +22,8 @@ const state = reactive({
   loading: false,
   error: '',
   streamMode: false,
+  demoMode: true,
+  refreshKey: 0,
   result: null as ProfileBuildResponse | null,
 })
 
@@ -41,6 +45,8 @@ async function handleStart(name: string, major: string, message: string) {
         resources: [],
         study_plan: [],
         traces: [],
+        recommendation_summary: '',
+        credibility: null,
       }
       await buildProfileStream(student.id, message, {
         onProfile(data) { if (state.result) state.result.student = data.student },
@@ -55,6 +61,7 @@ async function handleStart(name: string, major: string, message: string) {
       // Normal mode
       state.result = await buildProfile(student.id, message)
     }
+    state.refreshKey += 1
   } catch (err: any) {
     state.error = err?.response?.data?.detail || err?.message || '请求失败，请确认后端已启动。'
   } finally {
@@ -82,6 +89,10 @@ async function handleStart(name: string, major: string, message: string) {
           <input type="checkbox" v-model="state.streamMode" />
           <span class="toggle-text">流式输出模式 {{ state.streamMode ? '(SSE)' : '(标准)' }}</span>
         </label>
+        <label class="toggle-label">
+          <input type="checkbox" v-model="state.demoMode" />
+          <span class="toggle-text">演示模式 {{ state.demoMode ? '(已开启)' : '(已关闭)' }}</span>
+        </label>
       </div>
 
       <PresetSelector :loading="state.loading" @start="handleStart" />
@@ -99,6 +110,12 @@ async function handleStart(name: string, major: string, message: string) {
 
       <!-- Results -->
       <template v-if="state.result">
+        <RecommendationSummary
+          :summary="state.result.recommendation_summary"
+          :credibility="state.result.credibility"
+          :demo-mode="state.demoMode"
+        />
+
         <!-- Profile + Diagnosis side by side -->
         <div class="duo-grid section">
           <ProfileCard
@@ -114,9 +131,11 @@ async function handleStart(name: string, major: string, message: string) {
 
         <!-- Week 4: QA + Assessment -->
         <QAPanel :student-id="state.studentId" />
-        <AssessmentSubmit :student-id="state.studentId" @submitted="() => {}" />
+        <AssessmentSubmit :student-id="state.studentId" @submitted="() => { state.refreshKey += 1 }" />
         <AssessmentHistory :student-id="state.studentId" />
       </template>
+
+      <OverviewPanel :refresh-key="state.refreshKey" />
     </main>
 
     <footer class="app-footer">
