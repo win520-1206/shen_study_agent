@@ -31,7 +31,7 @@ app.include_router(router)
 app.include_router(stream_router)
 
 # Serve frontend static files
-if STATIC_DIR.exists():
+if (STATIC_DIR / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(STATIC_DIR / "assets")), name="assets")
 
 
