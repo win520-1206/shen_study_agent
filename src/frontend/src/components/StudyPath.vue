@@ -8,7 +8,7 @@ const props = defineProps<{
 
 <template>
   <section class="section" v-if="props.plan.length">
-    <h2 class="section-title">\u5b66\u4e60\u8def\u5f84</h2>
+    <h2 class="section-title">学习路径</h2>
     <div class="steps">
       <div
         v-for="(step, idx) in props.plan"
@@ -23,21 +23,21 @@ const props = defineProps<{
           <h3 class="step-title">{{ step.stage }}</h3>
 
           <div class="step-section">
-            <span class="step-label">\u76ee\u6807</span>
+            <span class="step-label">目标</span>
             <ul class="obj-list">
               <li v-for="obj in step.objectives" :key="obj">{{ obj }}</li>
             </ul>
           </div>
 
           <div class="step-section">
-            <span class="step-label">\u63a8\u8350\u8d44\u6e90</span>
+            <span class="step-label">推荐资源</span>
             <div class="res-tags">
               <span v-for="r in step.recommended_resources" :key="r" class="chip chip--blue">{{ r }}</span>
             </div>
           </div>
 
           <div class="step-section">
-            <span class="step-label">\u5b9e\u8df5\u4efb\u52a1</span>
+            <span class="step-label">实践任务</span>
             <p class="task-text">{{ step.practice_task }}</p>
           </div>
 

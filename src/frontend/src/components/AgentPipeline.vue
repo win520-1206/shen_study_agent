@@ -9,19 +9,19 @@ const props = defineProps<{
 const expanded = ref(false)
 
 const agentIcons: Record<string, string> = {
-  '\u753b\u50cf': '\ud83d\udc64',
-  '\u8bca\u65ad': '\ud83d\udd0d',
-  '\u8d44\u6e90\u89c4\u5212': '\ud83d\udcdc',
-  '\u5185\u5bb9\u751f\u6210': '\u270d\ufe0f',
-  '\u8def\u5f84\u89c4\u5212': '\ud83d\uddfa\ufe0f',
-  '\u5ba1\u67e5': '\u2705',
+  '画像': '👤',
+  '诊断': '🔍',
+  '资源规划': '📄',
+  '内容生成': '✍️',
+  '路径规划': '🗺️',
+  '审查': '✅',
 }
 
 function getShortName(fullName: string): string {
   return fullName
-    .replace('\u667a\u80fd\u4f53', '')
+    .replace('智能体', '')
     .replace('(LLM)', '')
-    .replace('\uff08LLM\uff09', '')
+    .replace('（LLM）', '')
     .trim()
 }
 
@@ -29,13 +29,13 @@ function getIcon(name: string): string {
   for (const [key, icon] of Object.entries(agentIcons)) {
     if (name.includes(key)) return icon
   }
-  return '\u2699\ufe0f'
+  return '⚙️'
 }
 </script>
 
 <template>
   <section class="section" v-if="props.traces.length">
-    <h2 class="section-title">\u591a\u667a\u80fd\u4f53\u534f\u4f5c\u7ba1\u7ebf</h2>
+    <h2 class="section-title">多智能体协作管线</h2>
     <div class="pipeline glass-card">
       <div class="pipe-track">
         <template v-for="(trace, idx) in props.traces" :key="trace.agent_name">
@@ -57,8 +57,8 @@ function getIcon(name: string): string {
       </div>
 
       <button class="expand-btn" @click="expanded = !expanded">
-        {{ expanded ? '\u6536\u8d77\u8be6\u60c5' : '\u67e5\u770b\u8be6\u60c5' }}
-        <span class="expand-arrow" :class="{ open: expanded }">\u25bc</span>
+        {{ expanded ? '收起详情' : '查看详情' }}
+        <span class="expand-arrow" :class="{ open: expanded }">▼</span>
       </button>
 
       <div class="trace-details" v-if="expanded">
@@ -69,13 +69,13 @@ function getIcon(name: string): string {
         >
           <strong>{{ getShortName(trace.agent_name) }}</strong>
           <div class="trace-io">
-            <span class="trace-tag">\u8f93\u5165</span> {{ trace.input_summary }}
+            <span class="trace-tag">输入</span> {{ trace.input_summary }}
           </div>
           <div class="trace-io">
             <span class="trace-tag reason">决策</span> {{ trace.decision_reason }}
           </div>
           <div class="trace-io">
-            <span class="trace-tag out">\u8f93\u51fa</span> {{ trace.output_summary }}
+            <span class="trace-tag out">输出</span> {{ trace.output_summary }}
           </div>
           <div class="trace-io">
             <span class="trace-tag impact">影响</span> {{ trace.impact_on_result }}

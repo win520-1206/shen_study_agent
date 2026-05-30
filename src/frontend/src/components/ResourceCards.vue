@@ -7,15 +7,15 @@ const props = defineProps<{
 }>()
 
 const typeConfig: Record<string, { icon: string; colorVar: string; label: string }> = {
-  lesson_note: { icon: '\ud83d\udcd6', colorVar: '--color-lesson', label: '\u8bb2\u4e49' },
-  quiz: { icon: '\u2705', colorVar: '--color-quiz', label: '\u7ec3\u4e60\u9898' },
-  coding_case: { icon: '\ud83d\udcbb', colorVar: '--color-coding', label: '\u4ee3\u7801\u6848\u4f8b' },
-  mind_map: { icon: '\ud83e\udde0', colorVar: '--color-mindmap', label: '\u601d\u7ef4\u5bfc\u56fe' },
-  study_path: { icon: '\ud83d\udccb', colorVar: '--color-path', label: '\u5b66\u4e60\u8def\u5f84' },
+  lesson_note: { icon: '📖', colorVar: '--color-lesson', label: '讲义' },
+  quiz: { icon: '✅', colorVar: '--color-quiz', label: '练习题' },
+  coding_case: { icon: '💻', colorVar: '--color-coding', label: '代码案例' },
+  mind_map: { icon: '🧠', colorVar: '--color-mindmap', label: '思维导图' },
+  study_path: { icon: '📋', colorVar: '--color-path', label: '学习路径' },
 }
 
 function getConfig(type: string) {
-  return typeConfig[type] || { icon: '\u2699\ufe0f', colorVar: '--color-primary', label: type }
+  return typeConfig[type] || { icon: '⚙️', colorVar: '--color-primary', label: type }
 }
 
 function renderMd(content: string): string {
@@ -25,7 +25,7 @@ function renderMd(content: string): string {
 
 <template>
   <section class="section" v-if="props.resources.length">
-    <h2 class="section-title">\u4e2a\u6027\u5316\u5b66\u4e60\u8d44\u6e90</h2>
+    <h2 class="section-title">个性化学习资源</h2>
     <div class="res-grid">
       <article
         v-for="res in props.resources"
@@ -47,7 +47,7 @@ function renderMd(content: string): string {
         </div>
         <div class="md-body" v-html="renderMd(res.content)"></div>
         <div class="res-refs" v-if="res.source_refs.length">
-          <span class="refs-label">\u6765\u6e90</span>
+          <span class="refs-label">来源</span>
           <span v-for="ref in res.source_refs" :key="ref" class="ref-tag">{{ ref }}</span>
         </div>
       </article>
