@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 环境变量和密钥（重要！）
+.env
+*.env
+config_local.py
+src/backend/app/config.py  # 包含 API 密钥，不要上传！
+
+# 数据库文件
+runtime/
+*.db
+*.sqlite3
+
+# 前端构建产物
+src/frontend/node_modules/
+src/frontend/dist/
+src/backend/static/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+temp_*.py
+*.tmp
+
+# 日志
+*.log
+logs/
+
+# 测试缓存
+.pytest_cache/
+.coverage
+htmlcov/
