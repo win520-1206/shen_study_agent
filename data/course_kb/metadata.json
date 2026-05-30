@@ -1,0 +1,50 @@
+[
+  {
+    "module_id": "ml01_overview",
+    "module_name": "机器学习概述",
+    "keywords": ["监督学习", "无监督学习", "任务定义", "泛化"],
+    "knowledge_units": ["机器学习定义", "监督学习与无监督学习", "训练集与测试集"]
+  },
+  {
+    "module_id": "ml02_preprocessing",
+    "module_name": "数据预处理与特征工程",
+    "keywords": ["缺失值", "标准化", "编码", "特征选择"],
+    "knowledge_units": ["数据清洗", "特征缩放", "特征构造"]
+  },
+  {
+    "module_id": "ml03_linear_regression",
+    "module_name": "线性回归",
+    "keywords": ["线性回归", "最小二乘", "回归任务", "损失函数"],
+    "knowledge_units": ["回归建模", "损失函数", "参数估计"]
+  },
+  {
+    "module_id": "ml04_logistic_regression",
+    "module_name": "逻辑回归",
+    "keywords": ["逻辑回归", "分类", "sigmoid", "概率输出"],
+    "knowledge_units": ["二分类", "sigmoid函数", "决策边界"]
+  },
+  {
+    "module_id": "ml05_tree_random_forest",
+    "module_name": "决策树与随机森林",
+    "keywords": ["决策树", "信息增益", "随机森林", "集成学习"],
+    "knowledge_units": ["树模型", "划分准则", "集成投票"]
+  },
+  {
+    "module_id": "ml06_svm",
+    "module_name": "支持向量机",
+    "keywords": ["支持向量机", "间隔", "核函数", "分类边界"],
+    "knowledge_units": ["最大间隔", "核技巧", "软间隔"]
+  },
+  {
+    "module_id": "ml07_clustering",
+    "module_name": "聚类算法",
+    "keywords": ["聚类", "KMeans", "无监督学习", "簇中心"],
+    "knowledge_units": ["KMeans流程", "聚类评价", "初始化问题"]
+  },
+  {
+    "module_id": "ml08_evaluation",
+    "module_name": "模型评估与过拟合控制",
+    "keywords": ["模型评估", "交叉验证", "过拟合", "偏差方差"],
+    "knowledge_units": ["准确率与召回率", "交叉验证", "正则化"]
+  }
+]
