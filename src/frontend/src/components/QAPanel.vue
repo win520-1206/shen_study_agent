@@ -52,12 +52,12 @@ function renderMd(s: string) { return marked.parse(s) as string }
         </div>
       </div>
       <div class="qa-empty" v-else>
-        <p>对课程内容有疑问？诹问试试！</p>
+        <p>对课程内容有疑问？试试问问！</p>
       </div>
       <div class="qa-input">
         <el-input
           v-model="question"
-          placeholder="诹输入问题，例如：什么是线性回归？"
+          placeholder="请输入问题，例如：什么是线性回归？"
           :disabled="loading || !studentId"
           @keyup.enter="handleAsk"
         />

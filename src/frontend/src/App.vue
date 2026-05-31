@@ -27,7 +27,7 @@ const state = reactive({
   result: null as ProfileBuildResponse | null,
 })
 
-async function handleStart(name: string, major: string, message: string) {
+async function handleStart(name: string, major: string, message: string, presetKey?: string) {
   state.loading = true
   state.error = ''
   state.result = null
