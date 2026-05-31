@@ -19,8 +19,8 @@ onMounted(load)
 watch(() => props.studentId, load)
 
 function trendIcon(t: string) {
-  if (t === '上升') return '↗'
-  if (t === '下降') return '↘'
+  if (t === '上升') return '↑'
+  if (t === '下降') return '↓'
   return '→'
 }
 
@@ -35,7 +35,6 @@ function trendClass(t: string) {
   <section class="section" v-if="data && data.records.length">
     <h2 class="section-title">学习效果评估</h2>
 
-    <!-- 弱项标记 -->
     <div class="weak-bar" v-if="data.weak_points.length">
       <span class="weak-label">⚠ 持续薄弱知识点：</span>
       <span v-for="wp in data.weak_points" :key="wp.knowledge_unit" class="chip chip--orange">
@@ -62,7 +61,6 @@ function trendClass(t: string) {
       </div>
     </div>
 
-    <!-- 评估历史表 -->
     <div class="assess-table glass-card">
       <div class="assess-row assess-header">
         <span>知识点</span>

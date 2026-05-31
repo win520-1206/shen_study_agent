@@ -16,7 +16,7 @@ const result = ref<any>(null)
 
 const presetUnits = [
   '线性回归',
-  '逻辑回归', 
+  '逻辑回归',
   '决策树',
   '支持向量机',
   '聚类',
@@ -100,7 +100,7 @@ async function handleSubmit() {
             up: result.trend === '上升',
             down: result.trend === '下降',
           }">
-            {{ result.trend === '上升' ? '↗' : result.trend === '下降' ? '↘' : '→' }} {{ result.trend }}
+            {{ result.trend === '上升' ? '↑' : result.trend === '下降' ? '↓' : '→' }} {{ result.trend }}
           </span>
         </div>
       </div>

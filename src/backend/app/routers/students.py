@@ -11,6 +11,13 @@ from ..services.orchestrator import LearningOrchestrator
 router = APIRouter(prefix="/api/v1", tags=["learnmate"])
 
 
+@router.get("/kb/graph")
+def get_knowledge_graph():
+    """Return the knowledge dependency graph for visualization."""
+    from ..services.knowledge_base import KnowledgeBaseService
+    return KnowledgeBaseService().get_knowledge_graph()
+
+
 @router.get("/students")
 def list_students(db: Session = Depends(get_db)):
     students = db.query(models.Student).order_by(models.Student.created_at.desc()).all()
@@ -27,6 +34,7 @@ def list_students(db: Session = Depends(get_db)):
             "weak_points": profile.get("weak_points", []),
         })
     return {"students": result}
+
 
 @router.post("/students", response_model=schemas.StudentResponse)
 def create_student(payload: schemas.StudentCreate, db: Session = Depends(get_db)):
@@ -80,7 +88,7 @@ def ask_question(payload: schemas.QARequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Student not found")
 
     orchestrator = LearningOrchestrator(db)
-    result = orchestrator.answer_question(payload.student_id, payload.question)
+    result = orchestrator.answer_question(payload.student_id, payload.question, socratic=payload.socratic)
     return result
 
 
@@ -123,19 +131,16 @@ def get_overview_summary(db: Session = Depends(get_db)):
 @router.get("/kb/modules")
 def list_modules():
     from ..services.knowledge_base import KnowledgeBaseService
-
     return {"modules": KnowledgeBaseService().list_modules()}
 
 
 @router.get("/kb/questions")
 def list_questions():
     from ..services.knowledge_base import KnowledgeBaseService
-
     return {"questions": KnowledgeBaseService().list_questions()}
 
 
 @router.get("/kb/coding-cases")
 def list_coding_cases():
     from ..services.knowledge_base import KnowledgeBaseService
-
     return {"coding_cases": KnowledgeBaseService().list_coding_cases()}

@@ -46,6 +46,13 @@ class KnowledgeBaseService:
         file_path = self.kb_dir / f"{module_id}.md"
         return file_path.read_text(encoding="utf-8")
 
+    def get_knowledge_graph(self) -> dict[str, Any]:
+        """Load knowledge dependency graph for visualization."""
+        graph_file = self.kb_dir / "knowledge_graph.json"
+        if not graph_file.exists():
+            return {"nodes": [], "edges": [], "module_map": {}}
+        return json.loads(graph_file.read_text(encoding="utf-8"))
+
     def search(self, weak_points: list[str]) -> list[dict[str, Any]]:
         results: list[dict[str, Any]] = []
         for item in self._index:

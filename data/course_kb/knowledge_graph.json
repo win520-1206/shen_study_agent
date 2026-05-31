@@ -1,0 +1,93 @@
+{
+  "nodes": [
+    {
+      "id": "ml01_overview",
+      "label": "机器学习概述",
+      "level": 1,
+      "description": "机器学习的基本概念、任务分类、数据集划分",
+      "knowledge_units": ["机器学习定义", "监督学习与无监督学习", "训练集与测试集"]
+    },
+    {
+      "id": "ml02_preprocessing",
+      "label": "数据预处理与特征工程",
+      "level": 1,
+      "description": "数据清洗、特征缩放、编码、特征选择与构造",
+      "knowledge_units": ["数据清洗", "特征缩放", "特征构造"]
+    },
+    {
+      "id": "ml03_linear_regression",
+      "label": "线性回归",
+      "level": 2,
+      "description": "回归建模、最小二乘法、损失函数、梯度下降",
+      "knowledge_units": ["回归建模", "损失函数", "参数估计"]
+    },
+    {
+      "id": "ml04_logistic_regression",
+      "label": "逻辑回归",
+      "level": 2,
+      "description": "二分类问题、sigmoid函数、决策边界、概率输出",
+      "knowledge_units": ["二分类", "sigmoid函数", "决策边界"]
+    },
+    {
+      "id": "ml05_tree_random_forest",
+      "label": "决策树与随机森林",
+      "level": 2,
+      "description": "树模型、信息增益、集成学习、Bagging与Boosting",
+      "knowledge_units": ["树模型", "划分准则", "集成投票"]
+    },
+    {
+      "id": "ml06_svm",
+      "label": "支持向量机",
+      "level": 3,
+      "description": "最大间隔、核技巧、软间隔、分类边界",
+      "knowledge_units": ["最大间隔", "核技巧", "软间隔"]
+    },
+    {
+      "id": "ml07_clustering",
+      "label": "聚类算法",
+      "level": 2,
+      "description": "KMeans算法流程、聚类评价指标、无监督学习",
+      "knowledge_units": ["KMeans流程", "聚类评价", "初始化问题"]
+    },
+    {
+      "id": "ml08_evaluation",
+      "label": "模型评估与过拟合控制",
+      "level": 3,
+      "description": "准确率与召回率、交叉验证、正则化、偏差方差",
+      "knowledge_units": ["准确率与召回率", "交叉验证", "正则化"]
+    }
+  ],
+  "edges": [
+    { "from": "ml01_overview", "to": "ml02_preprocessing", "label": "基础概念" },
+    { "from": "ml02_preprocessing", "to": "ml03_linear_regression", "label": "特征准备" },
+    { "from": "ml02_preprocessing", "to": "ml05_tree_random_forest", "label": "特征准备" },
+    { "from": "ml02_preprocessing", "to": "ml06_svm", "label": "特征准备" },
+    { "from": "ml02_preprocessing", "to": "ml07_clustering", "label": "数据理解" },
+    { "from": "ml03_linear_regression", "to": "ml04_logistic_regression", "label": "回归到分类" },
+    { "from": "ml03_linear_regression", "to": "ml08_evaluation", "label": "评估对象" },
+    { "from": "ml04_logistic_regression", "to": "ml08_evaluation", "label": "评估对象" },
+    { "from": "ml05_tree_random_forest", "to": "ml08_evaluation", "label": "评估对象" },
+    { "from": "ml04_logistic_regression", "to": "ml06_svm", "label": "分类方法对比" },
+    { "from": "ml03_linear_regression", "to": "ml05_tree_random_forest", "label": "模型对比" }
+  ],
+  "module_map": {
+    "线性回归": "ml03_linear_regression",
+    "逻辑回归": "ml04_logistic_regression",
+    "决策树": "ml05_tree_random_forest",
+    "随机森林": "ml05_tree_random_forest",
+    "支持向量机": "ml06_svm",
+    "SVM": "ml06_svm",
+    "聚类": "ml07_clustering",
+    "KMeans": "ml07_clustering",
+    "模型评估": "ml08_evaluation",
+    "过拟合": "ml08_evaluation",
+    "正则化": "ml08_evaluation",
+    "特征工程": "ml02_preprocessing",
+    "数据预处理": "ml02_preprocessing",
+    "梯度下降": "ml03_linear_regression",
+    "损失函数": "ml03_linear_regression",
+    "sigmoid": "ml04_logistic_regression",
+    "信息增益": "ml05_tree_random_forest",
+    "交叉验证": "ml08_evaluation"
+  }
+}

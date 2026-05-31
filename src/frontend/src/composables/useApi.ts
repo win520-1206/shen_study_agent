@@ -6,6 +6,7 @@ import type {
   AssessmentHistoryResponse,
   DashboardResponse,
   OverviewSummaryResponse,
+  KnowledgeGraphData,
 } from '../types'
 
 const api = axios.create({
@@ -39,10 +40,12 @@ export async function buildProfile(
 export async function askQuestion(
   studentId: number,
   question: string,
+  socratic: boolean = false,
 ): Promise<QAResponse> {
   const { data } = await api.post<QAResponse>('/chat/qa', {
     student_id: studentId,
     question,
+    socratic,
   })
   return data
 }
@@ -65,6 +68,11 @@ export async function getDashboard(
 
 export async function getOverviewSummary(): Promise<OverviewSummaryResponse> {
   const { data } = await api.get<OverviewSummaryResponse>('/overview/summary')
+  return data
+}
+
+export async function getKnowledgeGraph(): Promise<KnowledgeGraphData> {
+  const { data } = await api.get<KnowledgeGraphData>('/kb/graph')
   return data
 }
 

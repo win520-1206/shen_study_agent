@@ -9,9 +9,9 @@ const props = defineProps<{
 const expanded = ref(false)
 
 const agentIcons: Record<string, string> = {
-  '画像': '👤',
+  '画像': '🧑‍🎓',
   '诊断': '🔍',
-  '资源规划': '📄',
+  '资源规划': '📋',
   '内容生成': '✍️',
   '路径规划': '🗺️',
   '审查': '✅',
@@ -58,7 +58,7 @@ function getIcon(name: string): string {
 
       <button class="expand-btn" @click="expanded = !expanded">
         {{ expanded ? '收起详情' : '查看详情' }}
-        <span class="expand-arrow" :class="{ open: expanded }">▼</span>
+        <span class="expand-arrow" :class="{ open: expanded }">▾</span>
       </button>
 
       <div class="trace-details" v-if="expanded">

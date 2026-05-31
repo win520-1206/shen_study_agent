@@ -27,7 +27,6 @@ class LearningOrchestrator:
         self.db = db
         self.kb_service = KnowledgeBaseService()
 
-        # 根据配置选择规则式或 LLM 式智能体
         if USE_LLM:
             llm = get_llm_service()
             self.profile_agent = LLMProfileAgent(llm)
@@ -40,7 +39,6 @@ class LearningOrchestrator:
             self.content_generator_agent = ContentGeneratorAgent()
             self._llm_service = None
 
-        # 以下智能体暂时保持规则式
         self.resource_planner_agent = ResourcePlannerAgent()
         self.path_planner_agent = PathPlannerAgent()
         self.review_agent = ReviewAgent()
@@ -52,13 +50,13 @@ class LearningOrchestrator:
         weak_history: list[dict[str, Any]],
     ) -> str:
         parts = [
-            f"系统识别你当前的学习目标是“{profile['learning_goal']}”，基础水平为“{profile['prerequisite_level']}”。",
-            f"本轮优先推荐“{diagnosis['priority_modules'][0]}”，重点攻克“{diagnosis['focus_knowledge_unit']}”。",
+            f"系统识别你当前的学习目标是\u201c{profile['learning_goal']}\u201d，基础水平为\u201c{profile['prerequisite_level']}\u201d。",
+            f"本轮优先推荐\u201c{diagnosis['priority_modules'][0]}\u201d，重点攻克\u201c{diagnosis['focus_knowledge_unit']}\u201d。",
         ]
         if weak_history:
             top_weak = weak_history[0]
             parts.append(
-                f"结合历史评估，系统发现你在“{top_weak['knowledge_unit']}”上仍较薄弱，因此提高了相关内容的推荐优先级。"
+                f"结合历史评估，系统发现在\u201c{top_weak['knowledge_unit']}\u201d上仍较薄弱，因此提高了相关内容的推荐优先级。"
             )
         else:
             parts.append("当前还没有历史测验记录，因此本轮推荐主要依据你的对话画像和知识库命中结果。")
@@ -101,11 +99,11 @@ class LearningOrchestrator:
         if not records:
             progress_summary = "当前还没有评估记录，建议先完成一次针对性练习，系统再根据结果动态调整推荐。"
         elif weak_points:
-            progress_summary = f"最近的学习记录显示，你在“{weak_points[0]['knowledge_unit']}”上仍需重点突破，建议优先完成相关讲义和练习。"
+            progress_summary = f"最近的学习记录显示，你在\u201c{weak_points[0]['knowledge_unit']}\u201d上仍需重点突破，建议优先完成相关讲义和练习。"
         elif improvement_points:
-            progress_summary = f"你在“{improvement_points[0]['knowledge_unit']}”上的成绩已有上升趋势，可以逐步把精力转向更高难度任务。"
+            progress_summary = f"你在\u201c{improvement_points[0]['knowledge_unit']}\u201d上的成绩已有上升趋势，可以逐步把精力转向更高难度任务。"
         else:
-            progress_summary = "当前评估结果整体稳定，建议保持现有节奏并继续通过练习巩固。"
+            progress_summary = "当前评估结果整体稳定，建议保持现有节奏并通过练习巩固。"
 
         return {
             "records": records,
@@ -268,7 +266,6 @@ class LearningOrchestrator:
         }
 
     def submit_assessment(self, student_id: int, knowledge_unit: str, score: int) -> dict[str, Any]:
-        # 查询历史评估记录
         history = (
             self.db.query(models.AssessmentRecord)
             .filter(
@@ -281,7 +278,6 @@ class LearningOrchestrator:
         )
         scores = [record.score for record in history]
 
-        # 生成反馈
         if score >= 80:
             feedback = "掌握较好，可以进入下一个知识点。"
             recommendation = "推送更高难度练习"
@@ -292,7 +288,6 @@ class LearningOrchestrator:
             feedback = "尚未掌握，建议回看讲解文档并重做基础题。"
             recommendation = f"优先复习 {knowledge_unit}，从基础概念开始"
 
-        # 趋势分析
         trend = "持平"
         if len(scores) >= 2:
             if score > scores[0]:
@@ -336,35 +331,30 @@ class LearningOrchestrator:
             "progress_summary": analysis["progress_summary"],
         }
 
-    def answer_question(self, student_id: int, question: str) -> dict[str, Any]:
-        """智能答疑：基于知识库回答课程相关问题。"""
-        # 获取学生画像
+    def answer_question(self, student_id: int, question: str, socratic: bool = False) -> dict[str, Any]:
+        """智能答疑：基于知识库回答课程相关问题，支持苏格拉底式追问。"""
         student = self.db.get(models.Student, student_id)
         profile = None
         if student and student.profile_json:
             profile = json.loads(student.profile_json)
 
-        # 知识库检索
         search_terms = [question]
         if profile and profile.get("weak_points"):
             search_terms.extend(profile["weak_points"])
         kb_hits = self.kb_service.search(search_terms)
 
-        # 构建知识库上下文
         kb_context = ""
         if kb_hits:
             module_id = kb_hits[0]["module_id"]
             kb_context = self.kb_service.get_module_content(module_id)[:1500]
 
-        # 调用答疑智能体
         if self._llm_service:
             qa_agent = LLMQAAgent(self._llm_service)
         else:
             qa_agent = LLMQAAgent(get_llm_service())
 
-        result = qa_agent.run(question, profile, kb_context)
+        result = qa_agent.run(question, profile, kb_context, socratic=socratic)
 
-        # 记录轨迹
         if student and student.sessions:
             latest_session = sorted(student.sessions, key=lambda s: s.created_at)[-1]
             self.db.add(

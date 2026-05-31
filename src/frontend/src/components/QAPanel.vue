@@ -9,20 +9,28 @@ const props = defineProps<{
 }>()
 
 const question = ref('')
-const suggestedQuestions = ['什么是线性回归？', '逻辑回归和线性回归有什么区别？', '什么是过拟合？', '决策树的优缺点是什么？']
+const socraticMode = ref(false)
 const loading = ref(false)
-const history = ref<Array<{ q: string; a: QAResponse }>>([])
+const history = ref<Array<{ q: string; a: QAResponse; socratic: boolean }>>([])
 
 async function handleAsk() {
   const q = question.value.trim()
   if (!q || !props.studentId) return
   loading.value = true
   try {
-    const resp = await askQuestion(props.studentId, q)
-    history.value.push({ q, a: resp })
+    const resp = await askQuestion(props.studentId, q, socraticMode.value)
+    history.value.push({ q, a: resp, socratic: socraticMode.value })
     question.value = ''
   } catch {
-    history.value.push({ q, a: { answer: '请求失败，请确认后端已启动。', source_refs: [], agent_trace: { agent_name: '', input_summary: '', output_summary: '' } } })
+    history.value.push({
+      q,
+      a: {
+        answer: '请求失败，请确认后端已启动。',
+        source_refs: [],
+        agent_trace: { agent_name: '', input_summary: '', output_summary: '', decision_reason: '', impact_on_result: '' },
+      },
+      socratic: false,
+    })
   } finally {
     loading.value = false
   }
@@ -38,8 +46,9 @@ function renderMd(s: string) { return marked.parse(s) as string }
       <div class="qa-history" v-if="history.length">
         <div v-for="(item, idx) in history" :key="idx" class="qa-item">
           <div class="qa-q">
-            <span class="qa-icon">❓</span>
+            <span class="qa-icon">💬</span>
             <span>{{ item.q }}</span>
+            <span class="socratic-badge" v-if="item.socratic">🧠 苏格拉底模式</span>
           </div>
           <div class="qa-a">
             <span class="qa-icon">✅</span>
@@ -54,10 +63,20 @@ function renderMd(s: string) { return marked.parse(s) as string }
       <div class="qa-empty" v-else>
         <p>对课程内容有疑问？试试问问！</p>
       </div>
+      <div class="qa-controls">
+        <label class="socratic-toggle">
+          <input type="checkbox" v-model="socraticMode" />
+          <span class="toggle-track">
+            <span class="toggle-thumb"></span>
+          </span>
+          <span class="toggle-label">🧠 苏格拉底式追问</span>
+          <span class="toggle-hint" v-if="socraticMode">AI 会引导你主动思考</span>
+        </label>
+      </div>
       <div class="qa-input">
         <el-input
           v-model="question"
-          placeholder="请输入问题，例如：什么是线性回归？"
+          placeholder="请输入问题，例如：什么是过拟合？"
           :disabled="loading || !studentId"
           @keyup.enter="handleAsk"
         />
@@ -88,7 +107,7 @@ function renderMd(s: string) { return marked.parse(s) as string }
 
 .qa-q {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
@@ -109,6 +128,15 @@ function renderMd(s: string) { return marked.parse(s) as string }
   flex-shrink: 0;
   font-size: 16px;
   margin-top: 2px;
+}
+
+.socratic-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(124, 58, 237, 0.12);
+  color: var(--color-secondary);
 }
 
 .qa-refs {
@@ -133,33 +161,63 @@ function renderMd(s: string) { return marked.parse(s) as string }
   border: 1px solid var(--border-card);
 }
 
-.suggested {
-  display: flex;
+.qa-controls {
+  padding: 0 2px;
+}
+
+.socratic-toggle {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-
-.suggested-label {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.suggested-btn {
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  background: rgba(0, 212, 255, 0.08);
-  border: 1px solid rgba(0, 212, 255, 0.15);
-  color: var(--color-primary);
-  font-size: 12px;
+  gap: 10px;
   cursor: pointer;
-  transition: all 0.2s;
+  user-select: none;
 }
 
-.suggested-btn:hover {
-  background: rgba(0, 212, 255, 0.15);
-  border-color: rgba(0, 212, 255, 0.3);
+.socratic-toggle input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-track {
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-card);
+  position: relative;
+  transition: all 0.25s;
+}
+
+.toggle-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: all 0.25s;
+}
+
+.socratic-toggle input:checked + .toggle-track {
+  background: rgba(124, 58, 237, 0.2);
+  border-color: rgba(124, 58, 237, 0.4);
+}
+
+.socratic-toggle input:checked + .toggle-track .toggle-thumb {
+  left: 20px;
+  background: var(--color-secondary);
+}
+
+.toggle-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.toggle-hint {
+  font-size: 11px;
+  color: var(--color-secondary);
+  font-weight: 500;
 }
 
 .qa-empty p {

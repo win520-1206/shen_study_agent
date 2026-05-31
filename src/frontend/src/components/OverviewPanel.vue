@@ -71,7 +71,6 @@ watch(() => props.refreshKey, load)
   <section class="section">
     <h2 class="section-title">教师 / 评委成果看板</h2>
 
-    <!-- 聚合指标 -->
     <div class="overview-grid" v-if="overview">
       <article class="glass-card metric-card">
         <span class="metric-label">学生画像样本</span>
@@ -142,10 +141,9 @@ watch(() => props.refreshKey, load)
             <div class="student-weak">
               <span v-for="w in s.weak_points" :key="w" class="chip chip--orange chip-sm">{{ w }}</span>
             </div>
-            <span class="expand-arrow" :class="{ open: expandedId === s.id }">▼</span>
+            <span class="expand-arrow" :class="{ open: expandedId === s.id }">▾</span>
           </div>
 
-          <!-- 展开详情 -->
           <div class="student-detail" v-if="expandedId === s.id">
             <div v-if="expandLoading" class="detail-loading">加载中...</div>
             <div v-else-if="expandedData" class="detail-content">
@@ -172,7 +170,7 @@ watch(() => props.refreshKey, load)
                       <span>{{ a.knowledge_unit }}</span>
                       <span class="assess-score" :class="{ low: a.score < 70 }">{{ a.score }}分</span>
                       <span class="assess-trend">
-                        {{ a.trend === '上升' ? '↗' : a.trend === '下降' ? '↘' : '→' }}
+                        {{ a.trend === '上升' ? '↑' : a.trend === '下降' ? '↓' : '→' }}
                         {{ a.trend }}
                       </span>
                     </div>
@@ -270,7 +268,6 @@ watch(() => props.refreshKey, load)
   color: var(--text-muted);
 }
 
-/* -- 学生列表 -- */
 .student-list-section {
   margin-top: 28px;
 }

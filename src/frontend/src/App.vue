@@ -17,12 +17,12 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { path: '/', name: 'home', icon: '\u{1f3e0}', label: '首页', requiresResult: false },
-  { path: '/resources/lesson', name: 'lesson', icon: '\u{1f4d6}', label: '讲义', requiresResult: true },
-  { path: '/resources/quiz', name: 'quiz', icon: '\u2705', label: '练习题', requiresResult: true },
-  { path: '/resources/coding', name: 'coding', icon: '\u{1f4bb}', label: '代码案例', requiresResult: true },
-  { path: '/resources/mindmap', name: 'mindmap', icon: '\u{1f9e0}', label: '思维导图', requiresResult: true },
-  { path: '/resources/path', name: 'path', icon: '\u{1f4cb}', label: '学习路径', requiresResult: true },
+  { path: '/', name: 'home', icon: '🏠', label: '首页', requiresResult: false },
+  { path: '/resources/lesson', name: 'lesson', icon: '📖', label: '讲义', requiresResult: true },
+  { path: '/resources/quiz', name: 'quiz', icon: '✅', label: '练习题', requiresResult: true },
+  { path: '/resources/coding', name: 'coding', icon: '💻', label: '代码案例', requiresResult: true },
+  { path: '/resources/mindmap', name: 'mindmap', icon: '🧠', label: '思维导图', requiresResult: true },
+  { path: '/resources/path', name: 'path', icon: '📋', label: '学习路径', requiresResult: true },
 ]
 
 function navigateTo(item: NavItem) {

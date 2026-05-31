@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import KnowledgeGraph from './KnowledgeGraph.vue'
+
 const props = defineProps<{
   diagnosis: Record<string, any> | null
 }>()
@@ -38,11 +40,13 @@ const props = defineProps<{
       <div class="diag-item" v-if="props.diagnosis.risk_alert">
         <span class="diag-label">风险提示</span>
         <div class="risk-box">
-          <span class="risk-icon">⚠</span>
+          <span class="risk-icon">⚠️</span>
           <span>{{ props.diagnosis.risk_alert }}</span>
         </div>
       </div>
     </div>
+
+    <KnowledgeGraph :weak-points="props.diagnosis.weak_points || []" />
   </div>
 
   <div class="diag-card glass-card empty-state" v-else>

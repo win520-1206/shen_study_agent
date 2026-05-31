@@ -127,3 +127,23 @@ export interface OverviewSummaryResponse {
     weak_points: string[]
   }>
 }
+
+export interface KnowledgeGraphNode {
+  id: string
+  label: string
+  level: number
+  description: string
+  knowledge_units: string[]
+}
+
+export interface KnowledgeGraphEdge {
+  from: string
+  to: string
+  label: string
+}
+
+export interface KnowledgeGraphData {
+  nodes: KnowledgeGraphNode[]
+  edges: KnowledgeGraphEdge[]
+  module_map: Record<string, string>
+}

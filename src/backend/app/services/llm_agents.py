@@ -1,4 +1,4 @@
-﻿import json
+import json
 from typing import Any
 
 from .agents import AgentResult
@@ -135,7 +135,7 @@ class LLMContentGeneratorAgent:
             f"- 学习目标：{profile['learning_goal']}\n"
             f"- 薄弱点：{', '.join(profile['weak_points'])}\n\n"
             f"诊断推荐策略：{diagnosis.get('recommended_strategy', '')}\n\n"
-            f"课程知识库中与 \"{module['module_name']}\" 相关的内容：\n"
+            f"课程知识库中与 "{module['module_name']}" 相关的内容：\n"
             f"---\n{kb_context}\n---\n\n"
             '请生成以下 5 类学习资源，以 JSON 格式返回：\n'
             '{"resources": [\n'
@@ -143,7 +143,7 @@ class LLMContentGeneratorAgent:
             '  {"resource_type": "quiz", "title": "...", "content": "3道练习题含参考要点", "source_refs": [...]},\n'
             '  {"resource_type": "coding_case", "title": "...", "content": "代码实操任务说明含步骤", "source_refs": [...]},\n'
             '  {"resource_type": "mind_map", "title": "...", "content": "Mermaid mindmap 格式的思维导图", "source_refs": [...]},\n'
-            '  {"resource_type": "study_path", "title": "...", "content": "分步骤的学习任务清单", "source_refs": [...}]}\n'
+            '  {"resource_type": "study_path", "title": "...", "content": "分步骤的学习任务清单", "source_refs": [...]}\n'
             ']}\n\n'
             '只返回纯 JSON。'
         )
@@ -171,7 +171,7 @@ class LLMContentGeneratorAgent:
 
 
 class LLMQAAgent:
-    """智能答疑智能体：基于知识库回答课程相关问题。"""
+    """智能答疑智能体：基于知识库回答课程相关问题，支持苏格拉底式追问。"""
     name = "答疑智能体(LLM)"
 
     SYSTEM_PROMPT = (
@@ -183,13 +183,30 @@ class LLMQAAgent:
         "4. 回答控制在 300 字以内"
     )
 
+    SYSTEM_PROMPT_SOCRATIC = (
+        "你是一个机器学习课程的苏格拉底式答疑助教。你不仅回答问题，还会引导学生深入思考。\n"
+        "规则：\n"
+        "1. 先基于知识库内容回答学生的问题，通俗易懂，适当举例\n"
+        "2. 回答主体控制在 200 字以内\n"
+        "3. 在回答末尾，主动抛出 1 个引导性问题，帮助学生加深理解或建立知识联系\n"
+        "4. 引导问题应该与当前知识点相关，可以是：\n"
+        "   - 考查对概念的理解：'你能用自己的话解释一下为什么...吗？'\n"
+        "   - 建立知识联系：'你觉得这个概念和之前学的XX有什么关系？'\n"
+        "   - 引导实践思考：'如果把XX应用到XX场景，你觉得会怎样？'\n"
+        "   - 对比辨析：'你能区分XX和XX这两个概念吗？'\n"
+        "5. 如果知识库中没有相关内容，如实告知，不要编造\n"
+        "6. 引导问题以【思考题】标记，便于前端识别"
+    )
+
     def __init__(self, llm_service: LLMService):
         self.llm_service = llm_service
 
-    def run(self, question: str, student_profile: dict[str, Any] | None, kb_context: str) -> AgentResult:
+    def run(self, question: str, student_profile: dict[str, Any] | None, kb_context: str, socratic: bool = False) -> AgentResult:
         level_hint = ""
         if student_profile:
             level_hint = f"\n学生基础：{student_profile.get('prerequisite_level', '未知')}，学习风格：{student_profile.get('learning_style', '未知')}"
+
+        system_prompt = self.SYSTEM_PROMPT_SOCRATIC if socratic else self.SYSTEM_PROMPT
 
         user_prompt = (
             f"课程知识库内容：\n---\n{kb_context[:1500]}\n---\n{level_hint}\n\n"
@@ -198,13 +215,13 @@ class LLMQAAgent:
         )
 
         try:
-            answer = self.llm_service.chat(self.SYSTEM_PROMPT, user_prompt)
+            answer = self.llm_service.chat(system_prompt, user_prompt)
         except Exception:
-            answer = f"关于 \"{question}\"：知识库中暂时没有找到直接相关的详细解答，建议先阅读课程讲义中的相关内容。"
+            answer = f'关于 "{question}"：知识库中暂时没有找到直接相关的详细解答，建议先阅读课程讲义中的相关内容。'
 
         return AgentResult(
             name=self.name,
-            input_summary=f"问题={question[:50]}",
+            input_summary=f"问题={question[:50]}; socratic={socratic}",
             output_summary=f"回答长度={len(answer)}字",
             payload={"answer": answer},
         )

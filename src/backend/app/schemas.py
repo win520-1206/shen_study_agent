@@ -1,4 +1,4 @@
-﻿from datetime import datetime
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -105,6 +105,7 @@ class DashboardResponse(BaseModel):
 class QARequest(BaseModel):
     student_id: int
     question: str = Field(..., min_length=2)
+    socratic: bool = False
 
 
 class QAResponse(BaseModel):
