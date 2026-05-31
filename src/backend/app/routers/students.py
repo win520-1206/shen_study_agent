@@ -11,6 +11,23 @@ from ..services.orchestrator import LearningOrchestrator
 router = APIRouter(prefix="/api/v1", tags=["learnmate"])
 
 
+@router.get("/students")
+def list_students(db: Session = Depends(get_db)):
+    students = db.query(models.Student).order_by(models.Student.created_at.desc()).all()
+    result = []
+    for s in students:
+        profile = json.loads(s.profile_json) if s.profile_json and s.profile_json != '{}' else {}
+        result.append({
+            "id": s.id,
+            "name": s.name,
+            "major": s.major,
+            "target_course": s.target_course,
+            "learning_goal": profile.get("learning_goal", "未建画像"),
+            "prerequisite_level": profile.get("prerequisite_level", ""),
+            "weak_points": profile.get("weak_points", []),
+        })
+    return {"students": result}
+
 @router.post("/students", response_model=schemas.StudentResponse)
 def create_student(payload: schemas.StudentCreate, db: Session = Depends(get_db)):
     student = models.Student(

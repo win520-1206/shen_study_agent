@@ -1,0 +1,187 @@
+<script setup lang="ts">
+import { appState } from '../store'
+import { createStudent, buildProfile, buildProfileStream } from '../composables/useApi'
+
+import HeroBanner from '../components/HeroBanner.vue'
+import PresetSelector from '../components/PresetSelector.vue'
+import ProfileCard from '../components/ProfileCard.vue'
+import DiagnosisPanel from '../components/DiagnosisPanel.vue'
+import AgentPipeline from '../components/AgentPipeline.vue'
+import ResourceCards from '../components/ResourceCards.vue'
+import StudyPath from '../components/StudyPath.vue'
+import QAPanel from '../components/QAPanel.vue'
+import AssessmentHistory from '../components/AssessmentHistory.vue'
+import AssessmentSubmit from '../components/AssessmentSubmit.vue'
+import RecommendationSummary from '../components/RecommendationSummary.vue'
+import OverviewPanel from '../components/OverviewPanel.vue'
+
+async function handleStart(name: string, major: string, message: string, presetKey?: string) {
+  appState.loading = true
+  appState.error = ''
+  appState.result = null
+  appState.studentId = 0
+  try {
+    const student = await createStudent(name, major)
+    appState.studentId = student.id
+    appState.studentName = student.name
+
+    if (appState.streamMode) {
+      appState.result = {
+        student: { id: student.id, name: student.name, major: student.major, target_course: student.target_course, profile: null },
+        diagnosis: {},
+        resources: [],
+        study_plan: [],
+        traces: [],
+        recommendation_summary: '',
+        credibility: null,
+      }
+      await buildProfileStream(student.id, message, {
+        onProfile(data) { if (appState.result) appState.result.student = data.student },
+        onDiagnosis(data) { if (appState.result) appState.result.diagnosis = data },
+        onTraces(data) { if (appState.result) appState.result.traces = data },
+        onResource(data) { if (appState.result) appState.result.resources.push(data) },
+        onPlan(data) { if (appState.result) appState.result.study_plan = data.study_plan },
+        onDone() { appState.loading = false },
+        onError(msg) { appState.error = msg; appState.loading = false },
+      })
+    } else {
+      appState.result = await buildProfile(student.id, message)
+    }
+    appState.refreshKey += 1
+  } catch (err: any) {
+    appState.error = err?.response?.data?.detail || err?.message || '请求失败，请确认后端已启动。'
+  } finally {
+    appState.loading = false
+  }
+}
+</script>
+
+<template>
+  <div class="home-page">
+    <HeroBanner />
+
+    <div class="stream-toggle">
+      <label class="toggle-label">
+        <input type="checkbox" v-model="appState.streamMode" />
+        <span class="toggle-text">流式输出模式 {{ appState.streamMode ? '(SSE)' : '(标准)' }}</span>
+      </label>
+      <label class="toggle-label">
+        <input type="checkbox" v-model="appState.demoMode" />
+        <span class="toggle-text">演示模式 {{ appState.demoMode ? '(已开启)' : '(已关闭)' }}</span>
+      </label>
+    </div>
+
+    <PresetSelector :loading="appState.loading" @start="handleStart" />
+
+    <div class="error-banner" v-if="appState.error">
+      <span>{{ appState.error }}</span>
+    </div>
+
+    <div class="loading-banner glass-card" v-if="appState.loading">
+      <div class="spinner"></div>
+      <span>6 个智能体正在协作生成个性化方案，请稍候...</span>
+    </div>
+
+    <template v-if="appState.result">
+      <RecommendationSummary
+        :summary="appState.result.recommendation_summary"
+        :credibility="appState.result.credibility"
+        :demo-mode="appState.demoMode"
+      />
+
+      <div class="duo-grid section">
+        <ProfileCard
+          :profile="appState.result.student.profile"
+          :name="appState.studentName"
+        />
+        <DiagnosisPanel :diagnosis="appState.result.diagnosis" />
+      </div>
+
+      <AgentPipeline :traces="appState.result.traces" />
+      <ResourceCards :resources="appState.result.resources" />
+      <StudyPath :plan="appState.result.study_plan" />
+
+      <QAPanel :student-id="appState.studentId" />
+      <AssessmentSubmit :student-id="appState.studentId" @submitted="() => { appState.refreshKey += 1 }" />
+      <AssessmentHistory :student-id="appState.studentId" />
+    </template>
+
+    <OverviewPanel :refresh-key="appState.refreshKey" />
+  </div>
+</template>
+
+<style scoped>
+.home-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.duo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.error-banner {
+  padding: 12px 18px;
+  border-radius: var(--radius-md);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #f87171;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.loading-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: var(--color-primary);
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(0, 212, 255, 0.2);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.stream-toggle {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 16px;
+}
+
+.toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.toggle-label input[type="checkbox"] {
+  accent-color: var(--color-primary);
+  width: 16px;
+  height: 16px;
+}
+
+.toggle-text {
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .duo-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
