@@ -10,15 +10,15 @@ const quizContent = computed(() => {
   return quiz?.content || ''
 })
 
+// Use diagnosis.focus_knowledge_unit (specific point like "最小二乘法") instead of source_refs[0] (module ID like "ml03_linear_regression")
 const knowledgeUnit = computed(() => {
   if (!appState.result) return ''
-  const quiz = appState.result.resources.find(r => r.resource_type === 'quiz')
-  return quiz?.source_refs?.[0] || ''
+  return appState.result.diagnosis?.focus_knowledge_unit || ''
 })
 </script>
 
 <template>
-  <ResourcePageWrapper resource-type="quiz" title="\u7ec3\u4e60\u9898" icon="\u2705" />
+  <ResourcePageWrapper resource-type="quiz" title="练习题" icon="✅" />
   <QuizPanel
     v-if="appState.studentId && quizContent"
     :student-id="appState.studentId"

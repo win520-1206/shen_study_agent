@@ -12,7 +12,6 @@ import ResourceCards from '../components/ResourceCards.vue'
 import StudyPath from '../components/StudyPath.vue'
 import QAPanel from '../components/QAPanel.vue'
 import AssessmentHistory from '../components/AssessmentHistory.vue'
-import AssessmentSubmit from '../components/AssessmentSubmit.vue'
 import RecommendationSummary from '../components/RecommendationSummary.vue'
 import OverviewPanel from '../components/OverviewPanel.vue'
 
@@ -145,7 +144,6 @@ async function handleStart(name: string, major: string, message: string, presetK
       <StudyPath :plan="appState.result.study_plan" />
 
       <QAPanel :student-id="appState.studentId" />
-      <AssessmentSubmit :student-id="appState.studentId" @submitted="() => { appState.refreshKey += 1 }" />
       <AssessmentHistory :student-id="appState.studentId" />
     </template>
 
