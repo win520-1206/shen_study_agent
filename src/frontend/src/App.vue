@@ -2,12 +2,20 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { appState } from './store'
+import StudentSelector from './components/StudentSelector.vue'
 
 const router = useRouter()
 const route = useRoute()
 
 const hasResult = computed(() => !!appState.result)
 
+function handleStudentSelect(studentId: number) {
+  router.push('/')
+}
+
+function handleCreateNew() {
+  router.push('/')
+}
 interface NavItem {
   path: string
   name: string
@@ -42,6 +50,7 @@ function isActive(item: NavItem): boolean {
       <div class="sidebar-logo">
         <span class="logo-text">LearnMate-AI</span>
       </div>
+      <StudentSelector @select="handleStudentSelect" @create-new="handleCreateNew" />
       <nav class="sidebar-nav">
         <button
           v-for="item in navItems"

@@ -7,6 +7,7 @@ import type {
   DashboardResponse,
   OverviewSummaryResponse,
   KnowledgeGraphData,
+  StudentListItem,
   QuizGradeResponse,
 } from '../types'
 
@@ -148,4 +149,9 @@ export async function buildProfileStream(
       }
     }
   }
+}
+
+export async function getStudents(): Promise<StudentListItem[]> {
+  const { data } = await api.get<{ students: StudentListItem[] }>('/students')
+  return data.students || []
 }

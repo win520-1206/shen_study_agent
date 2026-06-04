@@ -148,6 +148,16 @@ export interface KnowledgeGraphData {
   module_map: Record<string, string>
 }
 
+export interface StudentListItem {
+  id: number
+  name: string
+  major: string
+  target_course: string
+  learning_goal: string
+  prerequisite_level: string
+  weak_points: string[]
+}
+
 export interface QuizGradeRequest {
   student_id: number
   question: string

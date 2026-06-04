@@ -1,6 +1,7 @@
 ﻿<script setup lang="ts">
-import { appState } from '../store'
-import { createStudent, buildProfile, buildProfileStream } from '../composables/useApi'
+import { onMounted } from 'vue'
+import { appState, persistStudent } from '../store'
+import { createStudent, buildProfile, buildProfileStream, getDashboard } from '../composables/useApi'
 
 import HeroBanner from '../components/HeroBanner.vue'
 import PresetSelector from '../components/PresetSelector.vue'
@@ -15,19 +16,49 @@ import AssessmentSubmit from '../components/AssessmentSubmit.vue'
 import RecommendationSummary from '../components/RecommendationSummary.vue'
 import OverviewPanel from '../components/OverviewPanel.vue'
 
+
+// Restore data on page load if studentId exists (from localStorage)
+onMounted(async () => {
+  if (appState.studentId > 0 && !appState.result) {
+    try {
+      const dashboard = await getDashboard(appState.studentId)
+      appState.result = {
+        student: dashboard.student,
+        diagnosis: dashboard.latest_diagnosis,
+        resources: dashboard.resources,
+        study_plan: dashboard.latest_plan,
+        traces: dashboard.traces,
+        recommendation_summary: dashboard.recommendation_summary,
+        credibility: null,
+      }
+      appState.studentName = dashboard.student.name
+      appState.refreshKey += 1
+    } catch {
+      appState.studentId = 0
+      appState.studentName = ''
+    }
+  }
+})
+
 async function handleStart(name: string, major: string, message: string, presetKey?: string) {
   appState.loading = true
   appState.error = ''
   appState.result = null
-  appState.studentId = 0
   try {
-    const student = await createStudent(name, major)
-    appState.studentId = student.id
-    appState.studentName = student.name
+    let studentId = appState.studentId
+    let studentName = appState.studentName
+    if (studentId <= 0) {
+      const student = await createStudent(name, major)
+      studentId = student.id
+      studentName = student.name
+      persistStudent(studentId, studentName)
+    }
+    appState.studentId = studentId
+    appState.studentName = studentName
 
     if (appState.streamMode) {
       appState.result = {
-        student: { id: student.id, name: student.name, major: student.major, target_course: student.target_course, profile: null },
+        student: { id: studentId, name: studentName, major: major, target_course: '机器学习基础', profile: null },
         diagnosis: {},
         resources: [],
         study_plan: [],
@@ -35,8 +66,8 @@ async function handleStart(name: string, major: string, message: string, presetK
         recommendation_summary: '',
         credibility: null,
       }
-      await buildProfileStream(student.id, message, {
-        onProfile(data) { if (appState.result) appState.result.student = data.student },
+      await buildProfileStream(studentId, message, {
+        onProfile(data) { if (appState.result) { appState.result.student = data.student; persistStudent(studentId, studentName) } },
         onDiagnosis(data) { if (appState.result) appState.result.diagnosis = data },
         onTraces(data) { if (appState.result) appState.result.traces = data },
         onResource(data) { if (appState.result) appState.result.resources.push(data) },
@@ -45,7 +76,8 @@ async function handleStart(name: string, major: string, message: string, presetK
         onError(msg) { appState.error = msg; appState.loading = false },
       })
     } else {
-      appState.result = await buildProfile(student.id, message)
+      appState.result = await buildProfile(studentId, message)
+      persistStudent(studentId, studentName)
     }
     appState.refreshKey += 1
   } catch (err: any) {
