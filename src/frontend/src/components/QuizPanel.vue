@@ -27,7 +27,7 @@ function parseQuestions(content: string): QuizQuestion[] {
   for (const line of lines) {
     const trimmed = line.trim()
     // Match question number: "1." "1、" "1。" etc.
-    const qMatch = trimmed.match(/^(\d+)[.\u3001\uff0e]\s*(.+)/)
+    const qMatch = trimmed.match(/^(\d+)[.、．]\s*(.+)/)
     if (qMatch) {
       if (current?.question) {
         finalizeQuestion(current)
@@ -45,13 +45,13 @@ function parseQuestions(content: string): QuizQuestion[] {
     }
     if (current) {
       // Detect choice options: "A. xxx" "B. xxx" etc.
-      const optMatch = trimmed.match(/^([A-D])[.\uff0e]\s*(.+)/)
+      const optMatch = trimmed.match(/^([A-D])[.．]\s*(.+)/)
       if (optMatch) {
         current.options.push(trimmed)
         continue
       }
       // Detect reference answer line
-      const refMatch = trimmed.match(/^[\u53c2\u8003\u7b54\u6848\u8981\u70b9|\u53c2\u8003\u7b54\u6848|\u7b54\u6848\u8981\u70b9|\u53c2\u8003\u8981\u70b9][:\uff1a]?\s*(.*)/i)
+      const refMatch = trimmed.match(/^[参考答案要点|参考答案|答案要点|参考要点][:：]?\s*(.*)/i)
       if (refMatch) {
         current.reference = refMatch[1] || ''
       } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
@@ -78,8 +78,8 @@ function finalizeQuestion(q: Partial<QuizQuestion>) {
   }
   // Extract correct answer from reference: "正确答案是A" "答案：B" "答案是C"
   if (q.reference) {
-    const ansMatch = q.reference.match(/[\u6b63\u786e]?\u7b54\u6848[\u662f\uff1a:]*\s*([A-D])/i)
-      || q.reference.match(/([A-D])\s*(?:\u662f\u6b63\u786e|\u6b63\u786e)/i)
+    const ansMatch = q.reference.match(/[正确]?答案[是：:]*\s*([A-D])/i)
+      || q.reference.match(/([A-D])\s*(?:是正确|正确)/i)
     if (ansMatch) {
       q.correctAnswer = ansMatch[1].toUpperCase()
     }
@@ -133,11 +133,11 @@ async function handleGrade(q: QuizQuestion) {
   } catch {
     results.value[q.index] = {
       score: 0,
-      feedback: '\u8bf7\u6c42\u5931\u8d25\uff0c\u8bf7\u786e\u8ba4\u540e\u7aef\u5df2\u542f\u52a8\u3002',
+      feedback: '请求失败，请确认后端已启动。',
       key_points_hit: [],
       key_points_missed: [],
       knowledge_unit: '',
-      trend: '\u9996\u6b21',
+      trend: '首次',
     }
   } finally {
     grading.value[q.index] = false
@@ -170,11 +170,11 @@ function scoreColor(score: number): string {
 
 <template>
   <section class="section" v-if="questions.length">
-    <h2 class="section-title">\u4ea4\u4e92\u7b54\u9898</h2>
+    <h2 class="section-title">交互答题</h2>
 
     <div class="quiz-stats glass-card" v-if="gradedCount > 0">
-      <span class="stat-item">\u5df2\u7b54\uff1a<strong>{{ gradedCount }}</strong> / {{ questions.length }}</span>
-      <span class="stat-item">\u5e73\u5747\u5206\uff1a<strong :style="{ color: scoreColor(avgScore) }">{{ avgScore }}</strong></span>
+      <span class="stat-item">已答：<strong>{{ gradedCount }}</strong> / {{ questions.length }}</span>
+      <span class="stat-item">平均分：<strong :style="{ color: scoreColor(avgScore) }">{{ avgScore }}</strong></span>
     </div>
 
     <div class="quiz-list">
@@ -183,7 +183,7 @@ function scoreColor(score: number): string {
           <span class="quiz-num">{{ q.index }}</span>
           <span class="quiz-text">{{ q.question }}</span>
           <span class="quiz-type-badge" :class="q.type === 'choice' ? 'badge-choice' : 'badge-essay'">
-            {{ q.type === 'choice' ? '\u9009\u62e9\u9898' : '\u7b80\u7b54\u9898' }}
+            {{ q.type === 'choice' ? '选择题' : '简答题' }}
           </span>
         </div>
 
@@ -210,15 +210,15 @@ function scoreColor(score: number): string {
                 :checked="answers[q.index] === opt.charAt(0)"
               />
               <span class="opt-text">{{ opt }}</span>
-              <span v-if="choiceResults[q.index] && opt.charAt(0) === q.correctAnswer" class="opt-icon">\u2705</span>
-              <span v-if="choiceResults[q.index]?.correct === false && answers[q.index] === opt.charAt(0)" class="opt-icon">\u274c</span>
+              <span v-if="choiceResults[q.index] && opt.charAt(0) === q.correctAnswer" class="opt-icon">✅</span>
+              <span v-if="choiceResults[q.index]?.correct === false && answers[q.index] === opt.charAt(0)" class="opt-icon">❌</span>
             </label>
           </div>
           <div class="choice-result" v-if="choiceResults[q.index]">
             <span :class="choiceResults[q.index].correct ? 'result-correct' : 'result-wrong'">
-              {{ choiceResults[q.index].correct ? '\u7b54\u5bf9\u4e86\uff01' : '\u7b54\u9519\u4e86\uff0c\u6b63\u786e\u7b54\u6848\u662f ' + q.correctAnswer }}
+              {{ choiceResults[q.index].correct ? '答对了！' : '答错了，正确答案是 ' + q.correctAnswer }}
             </span>
-            <span class="auto-submit-hint" v-if="submitting[q.index]">\u6b63\u5728\u8bb0\u5f55\u6210\u7ee9...</span>
+            <span class="auto-submit-hint" v-if="submitting[q.index]">正在记录成绩...</span>
           </div>
         </template>
 
@@ -229,7 +229,7 @@ function scoreColor(score: number): string {
               v-model="answers[q.index]"
               type="textarea"
               :rows="2"
-              placeholder="\u8bf7\u8f93\u5165\u4f60\u7684\u7b54\u6848..."
+              placeholder="请输入你的答案..."
               :disabled="!!results[q.index]"
             />
           </div>
@@ -241,7 +241,7 @@ function scoreColor(score: number): string {
               :disabled="!answers[q.index]?.trim() || !studentId"
               @click="handleGrade(q)"
             >
-              \u63d0\u4ea4\u6279\u6539
+              提交批改
             </el-button>
           </div>
           <div class="quiz-result" v-if="results[q.index]">
@@ -249,16 +249,16 @@ function scoreColor(score: number): string {
               <div class="score-bar">
                 <div class="score-fill" :style="{ width: results[q.index].score + '%', background: scoreColor(results[q.index].score) }"></div>
               </div>
-              <span class="score-value" :style="{ color: scoreColor(results[q.index].score) }">{{ results[q.index].score }}\u5206</span>
+              <span class="score-value" :style="{ color: scoreColor(results[q.index].score) }">{{ results[q.index].score }}分</span>
             </div>
             <p class="result-feedback">{{ results[q.index].feedback }}</p>
             <div class="result-points" v-if="results[q.index].key_points_hit.length || results[q.index].key_points_missed.length">
               <div class="points-hit" v-if="results[q.index].key_points_hit.length">
-                <span class="points-label">\u2705 \u547d\u4e2d\u8981\u70b9</span>
+                <span class="points-label">✅ 命中要点</span>
                 <span v-for="p in results[q.index].key_points_hit" :key="p" class="chip chip--green">{{ p }}</span>
               </div>
               <div class="points-missed" v-if="results[q.index].key_points_missed.length">
-                <span class="points-label">\u274c \u9057\u6f0f\u8981\u70b9</span>
+                <span class="points-label">❌ 遗漏要点</span>
                 <span v-for="p in results[q.index].key_points_missed" :key="p" class="chip chip--orange">{{ p }}</span>
               </div>
             </div>
