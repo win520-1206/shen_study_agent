@@ -27,15 +27,34 @@ class LLMService:
         raise NotImplementedError
 
     def chat_json(self, system_prompt: str, user_prompt: str) -> dict[str, Any]:
-        response = self.chat(system_prompt, user_prompt)
-        try:
-            return json.loads(response)
-        except json.JSONDecodeError:
-            start = response.find("{")
-            end = response.rfind("}") + 1
+        import re as _re
+        for attempt in range(3):
+            raw = self.chat(system_prompt, user_prompt) if attempt == 0 else self.chat(
+                system_prompt, user_prompt + "\n\nReturn ONLY valid JSON, no markdown fences."
+            )
+            text = raw.strip()
+            # Strip markdown code fences
+            text = _re.sub(r'^```(?:json)?\s*', '', text)
+            text = _re.sub(r'\s*```$', '', text)
+            # Try direct parse
+            try:
+                return json.loads(text)
+            except json.JSONDecodeError:
+                pass
+            # Try extracting JSON between { and }
+            start = text.find("{")
+            end = text.rfind("}") + 1
             if start != -1 and end > start:
-                return json.loads(response[start:end])
-            raise
+                candidate = text[start:end]
+                # Fix trailing commas before } or ]
+                candidate = _re.sub(r',\s*([}\]])', r'\1', candidate)
+                try:
+                    return json.loads(candidate)
+                except json.JSONDecodeError as e:
+                    logger.warning("chat_json attempt %d failed: %s", attempt + 1, e)
+            else:
+                logger.warning("chat_json attempt %d: no JSON object found", attempt + 1)
+        raise ValueError(f"LLM did not return valid JSON after 3 attempts. Last response: {raw[:200]}")
 
     def chat_stream(self, system_prompt: str, user_prompt: str) -> Generator[str, None, None]:
         """Streaming version of chat. Default: yield full response at once."""
