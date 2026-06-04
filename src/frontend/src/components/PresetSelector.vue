@@ -1,8 +1,16 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps<{
   loading: boolean
+  initialName?: string
+  initialMajor?: string
+  initialGoal?: string
+  initialLevel?: string
+  initialWeak?: string[]
+  initialStyle?: string
+  initialHours?: string
+  initialExercise?: string
 }>()
 
 const emit = defineEmits<{
@@ -85,6 +93,18 @@ const customWeak = ref<string[]>([])
 const customStyle = ref('')
 const customHours = ref('')
 const customExercise = ref('')
+
+// Auto-fill from props (when student is selected)
+watch(() => [props.initialName, props.initialMajor, props.initialGoal, props.initialLevel, props.initialWeak, props.initialStyle, props.initialHours, props.initialExercise], () => {
+  if (props.initialName) customName.value = props.initialName
+  if (props.initialMajor) customMajor.value = props.initialMajor
+  if (props.initialGoal) customGoal.value = props.initialGoal
+  if (props.initialLevel) customLevel.value = props.initialLevel
+  if (props.initialWeak && props.initialWeak.length) customWeak.value = [...props.initialWeak]
+  if (props.initialStyle) customStyle.value = props.initialStyle
+  if (props.initialHours) customHours.value = props.initialHours
+  if (props.initialExercise) customExercise.value = props.initialExercise
+}, { immediate: true })
 const customMessage = ref('')
 
 function selectPreset(p: Preset) {

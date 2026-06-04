@@ -9,7 +9,24 @@ const route = useRoute()
 
 const hasResult = computed(() => !!appState.result)
 
-function handleStudentSelect(studentId: number) {
+async function handleStudentSelect(studentId: number) {
+  try {
+    const { getDashboard } = await import('./composables/useApi')
+    const dashboard = await getDashboard(studentId)
+    appState.result = {
+      student: dashboard.student,
+      diagnosis: dashboard.latest_diagnosis,
+      resources: dashboard.resources,
+      study_plan: dashboard.latest_plan,
+      traces: dashboard.traces,
+      recommendation_summary: dashboard.recommendation_summary,
+      credibility: null,
+    }
+    appState.studentName = dashboard.student.name
+    appState.refreshKey += 1
+  } catch {
+    // Student may have been deleted
+  }
   router.push('/')
 }
 

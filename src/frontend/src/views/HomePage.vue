@@ -103,7 +103,18 @@ async function handleStart(name: string, major: string, message: string, presetK
       </label>
     </div>
 
-    <PresetSelector :loading="appState.loading" @start="handleStart" />
+    <PresetSelector
+        :loading="appState.loading"
+        :initial-name="appState.studentName"
+        :initial-major="appState.result?.student?.profile?.major_background"
+        :initial-goal="appState.result?.student?.profile?.learning_goal"
+        :initial-level="appState.result?.student?.profile?.prerequisite_level"
+        :initial-weak="appState.result?.student?.profile?.weak_points"
+        :initial-style="appState.result?.student?.profile?.learning_style"
+        :initial-hours="appState.result?.student?.profile?.weekly_hours"
+        :initial-exercise="appState.result?.student?.profile?.exercise_preference"
+        @start="handleStart"
+      />
 
     <div class="error-banner" v-if="appState.error">
       <span>{{ appState.error }}</span>

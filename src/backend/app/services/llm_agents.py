@@ -133,7 +133,7 @@ class LLMContentGeneratorAgent:
             "\u8bf7\u751f\u6210\u4ee5\u4e0b 5 \u7c7b\u5b66\u4e60\u8d44\u6e90\uff0c\u4ee5 JSON \u683c\u5f0f\u8fd4\u56de\uff1a\n"
             '{"resources": [\n'
             '  {"resource_type": "lesson_note", "title": "...", "content": "200-400\u5b57\u7684\u4e2a\u6027\u5316\u8bb2\u4e49", "source_refs": [...]},\n'
-            '  {"resource_type": "quiz", "title": "...", "content": "3\u9053\u7ec3\u4e60\u9898\u542b\u53c2\u8003\u8981\u70b9", "source_refs": [...]},\n'
+            '  {"resource_type": "quiz", "title": "...", "content": "\u7ec3\u4e60\u9898\uff1a\u9009\u62e9\u9898\u7528A./B./C./D.\u6807\u8bb0\u9009\u9879\uff0c\u53c2\u8003\u7b54\u6848\u4e2d\u6ce8\u660e\u6b63\u786e\u9009\u9879\uff1b\u7b80\u7b54\u9898\u4fdd\u6301\u539f\u683c\u5f0f", "source_refs": [...]},\n'
             '  {"resource_type": "coding_case", "title": "...", "content": "\u4ee3\u7801\u5b9e\u64cd\u4efb\u52a1\u8bf4\u660e\u542b\u6b65\u9aa4", "source_refs": [...]},\n'
             '  {"resource_type": "mind_map", "title": "...", "content": "Mermaid mindmap \u683c\u5f0f\u7684\u601d\u7ef4\u5bfc\u56fe", "source_refs": [...]},\n'
             '  {"resource_type": "study_path", "title": "...", "content": "\u5206\u6b65\u9aa4\u7684\u5b66\u4e60\u4efb\u52a1\u6e05\u5355", "source_refs": [...]}\n'
@@ -147,7 +147,7 @@ class LLMContentGeneratorAgent:
             f"- \u57fa\u7840\u6c34\u5e73\uff1a{profile['prerequisite_level']}\n"
             f"- \u5b66\u4e60\u98ce\u683c\uff1a{profile['learning_style']}\n"
             f"- \u5b66\u4e60\u76ee\u6807\uff1a{profile['learning_goal']}\n"
-            f"- \u8584\u5f31\u70b9\uff1a{', '.join(profile['weak_points'])}\n\n"
+            f"- \u8584\u5f31\u70b9\uff1a{', '.join(profile['weak_points'])}\n"f"- \u7ec3\u4e60\u504f\u597d\uff1a{profile.get('exercise_preference', '\u6df7\u5408\u9898\u578b')}\n\n"
             f"\u8bca\u65ad\u63a8\u8350\u7b56\u7565\uff1a{diagnosis.get('recommended_strategy', '')}\n\n"
             f"\u8bfe\u7a0b\u77e5\u8bc6\u5e93\u4e2d\u76f8\u5173\u7684\u5185\u5bb9\uff1a\n"
             f"---\n{kb_context}\n---\n\n"
