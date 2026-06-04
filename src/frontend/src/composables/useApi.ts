@@ -1,4 +1,4 @@
-import axios from 'axios'
+﻿import axios from 'axios'
 import type {
   StudentResponse,
   ProfileBuildResponse,
@@ -7,11 +7,12 @@ import type {
   DashboardResponse,
   OverviewSummaryResponse,
   KnowledgeGraphData,
+  QuizGradeResponse,
 } from '../types'
 
 const api = axios.create({
   baseURL: '/api/v1',
-  timeout: 30000,
+  timeout: 120000,
 })
 
 export async function createStudent(
@@ -77,6 +78,23 @@ export async function getKnowledgeGraph(): Promise<KnowledgeGraphData> {
 }
 
 
+
+export async function gradeQuiz(
+  studentId: number,
+  question: string,
+  studentAnswer: string,
+  referenceAnswer: string,
+  knowledgeUnit: string,
+): Promise<QuizGradeResponse> {
+  const { data } = await api.post<QuizGradeResponse>('/quiz/grade', {
+    student_id: studentId,
+    question,
+    student_answer: studentAnswer,
+    reference_answer: referenceAnswer,
+    knowledge_unit: knowledgeUnit,
+  })
+  return data
+}
 export interface StreamCallbacks {
   onProfile?: (data: any) => void
   onDiagnosis?: (data: any) => void

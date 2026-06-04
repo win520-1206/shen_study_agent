@@ -1,4 +1,4 @@
-import json
+﻿import json
 from typing import Any
 
 from .agents import AgentResult
@@ -228,3 +228,58 @@ class LLMQAAgent:
             output_summary=f"\u56de\u7b54\u957f\u5ea6={len(answer)}\u5b57",
             payload={"answer": answer},
         )
+
+
+class LLMQuizGraderAgent:
+    name = "\u6279\u6539\u667a\u80fd\u4f53(LLM)"
+
+    SYSTEM_PROMPT = (
+        "\u4f60\u662f\u4e00\u4e2a\u673a\u5668\u5b66\u4e60\u8bfe\u7a0b\u7684\u81ea\u52a8\u6279\u6539\u52a9\u6559\u3002"
+        "\u6839\u636e\u53c2\u8003\u7b54\u6848\u548c\u5b66\u751f\u7684\u56de\u7b54\u8fdb\u884c\u8bc4\u5206\u3002\n"
+        "\u89c4\u5219\uff1a\n"
+        "1. \u53ea\u8fd4\u56de\u7eaf JSON\uff0c\u4e0d\u8981\u4efb\u4f55\u89e3\u91ca\u6587\u5b57\n"
+        "2. score \u8303\u56f4 0-100\uff0c\u6839\u636e\u56de\u7b54\u51c6\u786e\u6027\u548c\u5b8c\u6574\u6027\u8bc4\u5206\n"
+        "3. feedback \u7ed9\u51fa\u5177\u4f53\u7684\u6539\u8fdb\u5efa\u8bae\n"
+        "4. key_points_hit \u5217\u51fa\u5b66\u751f\u7b54\u5bf9\u7684\u8981\u70b9\n"
+        "5. key_points_missed \u5217\u51fa\u5b66\u751f\u9057\u6f0f\u7684\u8981\u70b9"
+    )
+
+    def __init__(self, llm_service: LLMService):
+        self.llm_service = llm_service
+
+    def run(self, question: str, reference_answer: str, student_answer: str) -> AgentResult:
+        user_prompt = (
+            f"\u9898\u76ee\uff1a{question}\n\n"
+            f"\u53c2\u8003\u7b54\u6848\uff1a{reference_answer}\n\n"
+            f"\u5b66\u751f\u56de\u7b54\uff1a{student_answer}\n\n"
+            "\u8bf7\u8bc4\u5206\u5e76\u8fd4\u56de JSON\uff1a\n"
+            '{"score": 0-100, "feedback": "...", "key_points_hit": [...], "key_points_missed": [...]}'
+        )
+        try:
+            result = self.llm_service.chat_json(self.SYSTEM_PROMPT, user_prompt)
+        except Exception:
+            result = self._fallback_grade(reference_answer, student_answer)
+
+        result.setdefault("score", 50)
+        result.setdefault("feedback", "\u56de\u7b54\u5df2\u8bb0\u5f55\u3002")
+        result.setdefault("key_points_hit", [])
+        result.setdefault("key_points_missed", [])
+        return AgentResult(
+            name=self.name,
+            input_summary=f"\u9898\u76ee={question[:40]}; \u7b54\u6848\u957f={len(student_answer)}",
+            output_summary=f"\u5f97\u5206={result['score']}",
+            payload=result,
+        )
+
+    def _fallback_grade(self, reference: str, answer: str) -> dict:
+        ref_lower = reference.lower()
+        ans_lower = answer.lower()
+        if not answer.strip():
+            return {"score": 0, "feedback": "\u672a\u586b\u5199\u7b54\u6848\u3002", "key_points_hit": [], "key_points_missed": []}
+        ref_chars = set(ref_lower.replace(" ", "").replace("\n", ""))
+        ans_chars = set(ans_lower.replace(" ", "").replace("\n", ""))
+        if not ref_chars:
+            return {"score": 60, "feedback": "\u56de\u7b54\u5df2\u63d0\u4ea4\u3002", "key_points_hit": [], "key_points_missed": []}
+        overlap = len(ref_chars & ans_chars) / len(ref_chars)
+        score = min(100, int(overlap * 120))
+        return {"score": score, "feedback": "\u57fa\u4e8e\u5173\u952e\u8bcd\u5339\u914d\u8bc4\u5206\u3002", "key_points_hit": [], "key_points_missed": []}

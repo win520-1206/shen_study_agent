@@ -1,4 +1,4 @@
-export interface StudentProfile {
+﻿export interface StudentProfile {
   major_background: string
   learning_goal: string
   prerequisite_level: string
@@ -146,4 +146,21 @@ export interface KnowledgeGraphData {
   nodes: KnowledgeGraphNode[]
   edges: KnowledgeGraphEdge[]
   module_map: Record<string, string>
+}
+
+export interface QuizGradeRequest {
+  student_id: number
+  question: string
+  student_answer: string
+  reference_answer: string
+  knowledge_unit: string
+}
+
+export interface QuizGradeResponse {
+  score: number
+  feedback: string
+  key_points_hit: string[]
+  key_points_missed: string[]
+  knowledge_unit: string
+  trend: string
 }

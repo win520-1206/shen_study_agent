@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -143,3 +143,19 @@ class OverviewSummaryResponse(BaseModel):
     average_score: float
     score_band_distribution: list[dict[str, Any]]
     featured_students: list[dict[str, Any]]
+
+class QuizGradeRequest(BaseModel):
+    student_id: int
+    question: str
+    student_answer: str = Field(..., min_length=1)
+    reference_answer: str = ""
+    knowledge_unit: str = ""
+
+
+class QuizGradeResponse(BaseModel):
+    score: int
+    feedback: str
+    key_points_hit: list[str] = []
+    key_points_missed: list[str] = []
+    knowledge_unit: str = ""
+    trend: str = "首次"

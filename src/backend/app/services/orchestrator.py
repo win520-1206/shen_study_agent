@@ -1,4 +1,4 @@
-import json
+﻿import json
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -19,6 +19,7 @@ from .llm_agents import (
     LLMDiagnosisAgent,
     LLMProfileAgent,
     LLMQAAgent,
+    LLMQuizGraderAgent,
 )
 
 
@@ -450,5 +451,55 @@ class LearningOrchestrator:
             "updated_at": latest_session.created_at,
         }
 
+
+    def grade_quiz(self, student_id: int, question: str, student_answer: str, reference_answer: str, knowledge_unit: str) -> dict[str, Any]:
+        if self._llm_service:
+            grader = LLMQuizGraderAgent(self._llm_service)
+        else:
+            grader = LLMQuizGraderAgent(get_llm_service())
+
+        result = grader.run(question, reference_answer, student_answer)
+        score = result.payload.get("score", 50)
+
+        if knowledge_unit:
+            history = (
+                self.db.query(models.AssessmentRecord)
+                .filter(
+                    models.AssessmentRecord.student_id == student_id,
+                    models.AssessmentRecord.knowledge_unit == knowledge_unit,
+                )
+                .order_by(models.AssessmentRecord.created_at.desc())
+                .limit(5)
+                .all()
+            )
+            scores = [r.score for r in history]
+            trend = "\u9996\u6b21"
+            if len(scores) >= 2:
+                if score > scores[0]:
+                    trend = "\u4e0a\u5347"
+                elif score < scores[0]:
+                    trend = "\u4e0b\u964d"
+                else:
+                    trend = "\u6301\u5e73"
+
+            record = models.AssessmentRecord(
+                student_id=student_id,
+                knowledge_unit=knowledge_unit,
+                score=score,
+                feedback=result.payload.get("feedback", ""),
+            )
+            self.db.add(record)
+            self.db.commit()
+        else:
+            trend = "\u9996\u6b21"
+
+        return {
+            "score": score,
+            "feedback": result.payload.get("feedback", ""),
+            "key_points_hit": result.payload.get("key_points_hit", []),
+            "key_points_missed": result.payload.get("key_points_missed", []),
+            "knowledge_unit": knowledge_unit,
+            "trend": trend,
+        }
     def get_overview_summary(self) -> dict[str, Any]:
         return self._build_overview_summary()

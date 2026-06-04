@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { appState } from '../store'
 import { createStudent, buildProfile, buildProfileStream } from '../composables/useApi'
 
@@ -49,7 +49,7 @@ async function handleStart(name: string, major: string, message: string, presetK
     }
     appState.refreshKey += 1
   } catch (err: any) {
-    appState.error = err?.response?.data?.detail || err?.message || '请求失败，请确认后端已启动。'
+    appState.error = err?.response?.data?.detail || (err?.code === 'ECONNABORTED' ? '请求超时，6个智能体协作耗时较长，请稍后重试' : err?.message) || '请求失败，请确认后端已启动。'
   } finally {
     appState.loading = false
   }

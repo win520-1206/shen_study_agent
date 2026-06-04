@@ -1,4 +1,4 @@
-import json
+﻿import json
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -127,6 +127,22 @@ def get_overview_summary(db: Session = Depends(get_db)):
     orchestrator = LearningOrchestrator(db)
     return orchestrator.get_overview_summary()
 
+
+
+@router.post("/quiz/grade", response_model=schemas.QuizGradeResponse)
+def grade_quiz(payload: schemas.QuizGradeRequest, db: Session = Depends(get_db)):
+    student = db.get(models.Student, payload.student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    orchestrator = LearningOrchestrator(db)
+    return orchestrator.grade_quiz(
+        payload.student_id,
+        payload.question,
+        payload.student_answer,
+        payload.reference_answer,
+        payload.knowledge_unit,
+    )
 
 @router.get("/kb/modules")
 def list_modules():
