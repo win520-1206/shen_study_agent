@@ -60,13 +60,13 @@ onMounted(() => {
         <span class="student-hint">已选择</span>
       </div>
       <button class="switch-btn" @click.stop="togglePanel" title="切换学生">
-        {{ showPanel ? '\u2713' : '\u2194' }}
+        {{ showPanel ? '✓' : '↔' }}
       </button>
     </div>
 
     <!-- 无学生时 -->
     <div v-else class="no-student" @click="togglePanel">
-      <span class="no-student-icon">\U0001f468\u200d\U0001f393</span>
+      <span class="no-student-icon">👨‍🎓</span>
       <span class="no-student-text">请选择学生</span>
     </div>
   </div>
@@ -78,7 +78,7 @@ onMounted(() => {
       <div class="ss-panel-header">
         <span>选择学生</span>
         <button class="ss-refresh" @click="loadStudents" :disabled="loading">
-          {{ loading ? '...' : '\u21bb' }}
+          {{ loading ? '...' : '↻' }}
         </button>
       </div>
 
@@ -97,7 +97,7 @@ onMounted(() => {
           </div>
           <span
             class="ss-item-goal"
-            v-if="s.learning_goal && s.learning_goal !== '\u672a\u5efa\u753b\u50cf'"
+            v-if="s.learning_goal && s.learning_goal !== '未建画像'"
           >
             {{ s.learning_goal }}
           </span>
