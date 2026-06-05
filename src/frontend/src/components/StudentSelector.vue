@@ -69,34 +69,34 @@ onMounted(() => {
       <span class="no-student-icon">\U0001f468\u200d\U0001f393</span>
       <span class="no-student-text">请选择学生</span>
     </div>
+  </div>
 
-    <!-- 移动端遮罩 -->
-    <div v-if="showPanel" class="mobile-overlay" @click="showPanel = false"></div>
-
-    <!-- 下拉面板 -->
-    <div class="dropdown-panel" v-if="showPanel">
-      <div class="dropdown-header">
+  <!-- 用 Teleport 渲染到 body，脱离侧边栏层叠上下文 -->
+  <Teleport to="body">
+    <div v-if="showPanel" class="ss-overlay" @click="showPanel = false"></div>
+    <div v-if="showPanel" class="ss-panel">
+      <div class="ss-panel-header">
         <span>选择学生</span>
-        <button class="refresh-btn" @click="loadStudents" :disabled="loading">
+        <button class="ss-refresh" @click="loadStudents" :disabled="loading">
           {{ loading ? '...' : '\u21bb' }}
         </button>
       </div>
 
-      <div class="student-list" v-if="students.length">
+      <div class="ss-list" v-if="students.length">
         <div
           v-for="s in students"
           :key="s.id"
-          class="student-item"
+          class="ss-item"
           :class="{ active: s.id === appState.studentId }"
           @click="handleSelect(s)"
         >
-          <div class="item-avatar">{{ s.name.charAt(0) }}</div>
-          <div class="item-info">
-            <span class="item-name">{{ s.name }}</span>
-            <span class="item-major">{{ s.major }}</span>
+          <div class="ss-item-avatar">{{ s.name.charAt(0) }}</div>
+          <div class="ss-item-info">
+            <span class="ss-item-name">{{ s.name }}</span>
+            <span class="ss-item-major">{{ s.major }}</span>
           </div>
           <span
-            class="item-goal"
+            class="ss-item-goal"
             v-if="s.learning_goal && s.learning_goal !== '\u672a\u5efa\u753b\u50cf'"
           >
             {{ s.learning_goal }}
@@ -104,15 +104,15 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="empty-list" v-else-if="!loading">
+      <div class="ss-empty" v-else-if="!loading">
         暂无学生记录
       </div>
 
-      <button class="create-btn" @click="handleCreateNew">
+      <button class="ss-create" @click="handleCreateNew">
         + 新建学生
       </button>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -217,144 +217,7 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* Dropdown */
-.dropdown-panel {
-  position: absolute;
-  left: 14px;
-  right: 14px;
-  top: 100%;
-  z-index: 300;
-  background: rgba(15, 23, 42, 0.97);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-  overflow: hidden;
-  margin-top: 4px;
-}
-
-.dropdown-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border-card);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-muted);
-}
-
-.refresh-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 14px;
-  padding: 2px 4px;
-}
-
-.refresh-btn:hover {
-  color: var(--color-primary);
-}
-
-.student-list {
-  max-height: 240px;
-  overflow-y: auto;
-}
-
-.student-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: background 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.student-item:hover,
-.student-item:active {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.student-item.active {
-  background: rgba(0, 212, 255, 0.08);
-}
-
-.item-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(124, 58, 237, 0.2);
-  color: var(--color-secondary);
-  font-size: 12px;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.item-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.item-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.item-major {
-  font-size: 11px;
-  color: var(--text-muted);
-}
-
-.item-goal {
-  font-size: 11px;
-  flex-shrink: 0;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: rgba(16, 185, 129, 0.12);
-  color: #10b981;
-}
-
-.empty-list {
-  padding: 20px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.create-btn {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-top: 1px solid var(--border-card);
-  background: transparent;
-  color: var(--color-primary);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.create-btn:hover,
-.create-btn:active {
-  background: rgba(0, 212, 255, 0.06);
-}
-
-/* Mobile overlay - hidden on desktop */
-.mobile-overlay {
-  display: none;
-}
-
-/* -- Mobile responsive -- */
+/* Mobile: only show avatar/icon */
 @media (max-width: 900px) {
   .student-selector {
     padding: 8px 6px;
@@ -366,13 +229,8 @@ onMounted(() => {
     min-height: 44px;
   }
 
-  .student-meta {
-    display: none;
-  }
-
-  .switch-btn {
-    display: none;
-  }
+  .student-meta { display: none; }
+  .switch-btn { display: none; }
 
   .student-avatar {
     width: 36px;
@@ -386,63 +244,174 @@ onMounted(() => {
     min-height: 44px;
   }
 
-  .no-student-text {
-    display: none;
-  }
+  .no-student-text { display: none; }
 
   .no-student-icon {
     font-size: 24px;
   }
+}
+</style>
 
-  .mobile-overlay {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 400;
+<style>
+/* Global styles for Teleported panel (not scoped) */
+.ss-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9000;
+}
+
+.ss-panel {
+  position: fixed;
+  z-index: 9001;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid var(--border-card);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.ss-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-card);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ss-refresh {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 8px;
+}
+
+.ss-list {
+  overflow-y: auto;
+}
+
+.ss-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ss-item:hover,
+.ss-item:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ss-item.active {
+  background: rgba(0, 212, 255, 0.1);
+}
+
+.ss-item-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(124, 58, 237, 0.2);
+  color: #7c3aed;
+  font-size: 14px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ss-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ss-item-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ss-item-major {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.ss-item-goal {
+  font-size: 11px;
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.ss-empty {
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.ss-create {
+  display: block;
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-top: 1px solid var(--border-card);
+  background: transparent;
+  color: #00d4ff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ss-create:hover,
+.ss-create:active {
+  background: rgba(0, 212, 255, 0.08);
+}
+
+/* Desktop: dropdown below the selector */
+@media (min-width: 901px) {
+  .ss-panel {
+    top: 60px;
+    left: 10px;
+    width: 200px;
+    max-height: 400px;
+    border-radius: var(--radius-md);
   }
 
-  .dropdown-panel {
-    position: fixed;
+  .ss-list {
+    max-height: 280px;
+  }
+}
+
+/* Mobile: full-screen panel from sidebar edge */
+@media (max-width: 900px) {
+  .ss-panel {
     left: 60px;
     top: 0;
     right: 0;
     bottom: 0;
-    margin: 0;
     border-radius: 0;
-    z-index: 500;
     display: flex;
     flex-direction: column;
   }
 
-  .student-list {
+  .ss-list {
     flex: 1;
     max-height: none;
-  }
-
-  .dropdown-header {
-    padding: 16px 14px;
-    font-size: 14px;
-  }
-
-  .student-item {
-    padding: 14px;
-  }
-
-  .item-name {
-    font-size: 14px;
-  }
-
-  .item-major {
-    font-size: 12px;
-  }
-
-  .create-btn {
-    padding: 14px;
-    font-size: 14px;
   }
 }
 </style>
