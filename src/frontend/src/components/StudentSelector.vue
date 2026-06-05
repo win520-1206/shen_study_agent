@@ -53,7 +53,7 @@ onMounted(() => {
 <template>
   <div class="student-selector">
     <!-- 有学生时 -->
-    <div v-if="appState.studentId > 0" class="current-student">
+    <div v-if="appState.studentId > 0" class="current-student" @click="togglePanel">
       <div class="student-avatar">{{ appState.studentName?.charAt(0) || '?' }}</div>
       <div class="student-meta">
         <span class="student-name-text">{{ appState.studentName }}</span>
@@ -332,9 +332,83 @@ onMounted(() => {
   background: rgba(0, 212, 255, 0.06);
 }
 
+/* -- Mobile responsive -- */
 @media (max-width: 900px) {
   .student-selector {
+    padding: 8px 6px;
+  }
+
+  .current-student {
+    padding: 6px;
+    justify-content: center;
+  }
+
+  .student-meta {
     display: none;
+  }
+
+  .switch-btn {
+    display: none;
+  }
+
+  .student-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .no-student {
+    justify-content: center;
+    padding: 8px;
+  }
+
+  .no-student-text {
+    display: none;
+  }
+
+  .no-student-icon {
+    font-size: 22px;
+  }
+
+  .dropdown-panel {
+    position: fixed;
+    left: 60px;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    border-radius: 0;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .student-list {
+    flex: 1;
+    max-height: none;
+  }
+
+  .dropdown-header {
+    padding: 16px 14px;
+    font-size: 14px;
+  }
+
+  .student-item {
+    padding: 14px;
+  }
+
+  .item-name {
+    font-size: 14px;
+  }
+
+  .item-major {
+    font-size: 12px;
+  }
+
+  .create-btn {
+    padding: 14px;
+    font-size: 14px;
   }
 }
 </style>
