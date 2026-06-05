@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { getStudents, getDashboard } from '../composables/useApi'
+import { ref, onMounted } from 'vue'
+import { getStudents } from '../composables/useApi'
 import { appState, persistStudent, clearStudent } from '../store'
 import type { StudentListItem } from '../types'
 
@@ -38,7 +38,7 @@ function handleCreateNew() {
 
 function togglePanel() {
   showPanel.value = !showPanel.value
-  if (showPanel.value && students.value.length === 0) {
+  if (showPanel.value) {
     loadStudents()
   }
 }
@@ -59,23 +59,26 @@ onMounted(() => {
         <span class="student-name-text">{{ appState.studentName }}</span>
         <span class="student-hint">已选择</span>
       </div>
-      <button class="switch-btn" @click="togglePanel" title="切换学生">
-        {{ showPanel ? '✕' : '↻' }}
+      <button class="switch-btn" @click.stop="togglePanel" title="切换学生">
+        {{ showPanel ? '\u2713' : '\u2194' }}
       </button>
     </div>
 
     <!-- 无学生时 -->
     <div v-else class="no-student" @click="togglePanel">
-      <span class="no-student-icon">👤</span>
+      <span class="no-student-icon">\U0001f468\u200d\U0001f393</span>
       <span class="no-student-text">请选择学生</span>
     </div>
+
+    <!-- 移动端遮罩 -->
+    <div v-if="showPanel" class="mobile-overlay" @click="showPanel = false"></div>
 
     <!-- 下拉面板 -->
     <div class="dropdown-panel" v-if="showPanel">
       <div class="dropdown-header">
         <span>选择学生</span>
         <button class="refresh-btn" @click="loadStudents" :disabled="loading">
-          {{ loading ? '...' : '↻' }}
+          {{ loading ? '...' : '\u21bb' }}
         </button>
       </div>
 
@@ -92,7 +95,10 @@ onMounted(() => {
             <span class="item-name">{{ s.name }}</span>
             <span class="item-major">{{ s.major }}</span>
           </div>
-          <span class="item-goal chip chip--green" v-if="s.learning_goal && s.learning_goal !== '未建画像'">
+          <span
+            class="item-goal"
+            v-if="s.learning_goal && s.learning_goal !== '\u672a\u5efa\u753b\u50cf'"
+          >
             {{ s.learning_goal }}
           </span>
         </div>
@@ -123,6 +129,8 @@ onMounted(() => {
   border-radius: var(--radius-sm);
   background: rgba(0, 212, 255, 0.06);
   border: 1px solid rgba(0, 212, 255, 0.15);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .student-avatar {
@@ -191,6 +199,7 @@ onMounted(() => {
   border: 1px dashed var(--border-card);
   cursor: pointer;
   transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .no-student:hover {
@@ -260,9 +269,11 @@ onMounted(() => {
   padding: 10px 14px;
   cursor: pointer;
   transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.student-item:hover {
+.student-item:hover,
+.student-item:active {
   background: rgba(255, 255, 255, 0.04);
 }
 
@@ -305,6 +316,10 @@ onMounted(() => {
 .item-goal {
   font-size: 11px;
   flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
 }
 
 .empty-list {
@@ -326,10 +341,17 @@ onMounted(() => {
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.create-btn:hover {
+.create-btn:hover,
+.create-btn:active {
   background: rgba(0, 212, 255, 0.06);
+}
+
+/* Mobile overlay - hidden on desktop */
+.mobile-overlay {
+  display: none;
 }
 
 /* -- Mobile responsive -- */
@@ -339,8 +361,9 @@ onMounted(() => {
   }
 
   .current-student {
-    padding: 6px;
+    padding: 8px;
     justify-content: center;
+    min-height: 44px;
   }
 
   .student-meta {
@@ -355,12 +378,12 @@ onMounted(() => {
     width: 36px;
     height: 36px;
     font-size: 16px;
-    cursor: pointer;
   }
 
   .no-student {
     justify-content: center;
-    padding: 8px;
+    padding: 10px;
+    min-height: 44px;
   }
 
   .no-student-text {
@@ -368,7 +391,18 @@ onMounted(() => {
   }
 
   .no-student-icon {
-    font-size: 22px;
+    font-size: 24px;
+  }
+
+  .mobile-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 400;
   }
 
   .dropdown-panel {
