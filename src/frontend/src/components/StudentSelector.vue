@@ -52,7 +52,6 @@ onMounted(() => {
 
 <template>
   <div class="student-selector">
-    <!-- 有学生时 -->
     <div v-if="appState.studentId > 0" class="current-student" @click="togglePanel">
       <div class="student-avatar">{{ appState.studentName?.charAt(0) || '?' }}</div>
       <div class="student-meta">
@@ -60,25 +59,23 @@ onMounted(() => {
         <span class="student-hint">已选择</span>
       </div>
       <button class="switch-btn" @click.stop="togglePanel" title="切换学生">
-        {{ showPanel ? '✓' : '↔' }}
+        {{ showPanel ? '\u2713' : '\u2194' }}
       </button>
     </div>
 
-    <!-- 无学生时 -->
     <div v-else class="no-student" @click="togglePanel">
       <span class="no-student-icon">👨‍🎓</span>
       <span class="no-student-text">请选择学生</span>
     </div>
   </div>
 
-  <!-- 用 Teleport 渲染到 body，脱离侧边栏层叠上下文 -->
   <Teleport to="body">
     <div v-if="showPanel" class="ss-overlay" @click="showPanel = false"></div>
     <div v-if="showPanel" class="ss-panel">
       <div class="ss-panel-header">
         <span>选择学生</span>
         <button class="ss-refresh" @click="loadStudents" :disabled="loading">
-          {{ loading ? '...' : '↻' }}
+          {{ loading ? '...' : '\u21bb' }}
         </button>
       </div>
 
@@ -97,7 +94,7 @@ onMounted(() => {
           </div>
           <span
             class="ss-item-goal"
-            v-if="s.learning_goal && s.learning_goal !== '未建画像'"
+            v-if="s.learning_goal && s.learning_goal !== '\u672a\u5efa\u753b\u50cf'"
           >
             {{ s.learning_goal }}
           </span>
@@ -217,7 +214,6 @@ onMounted(() => {
   font-weight: 600;
 }
 
-/* Mobile: only show avatar/icon */
 @media (max-width: 900px) {
   .student-selector {
     padding: 8px 6px;
@@ -253,7 +249,6 @@ onMounted(() => {
 </style>
 
 <style>
-/* Global styles for Teleported panel (not scoped) */
 .ss-overlay {
   position: fixed;
   inset: 0;
@@ -382,7 +377,6 @@ onMounted(() => {
   background: rgba(0, 212, 255, 0.08);
 }
 
-/* Desktop: dropdown below the selector */
 @media (min-width: 901px) {
   .ss-panel {
     top: 60px;
@@ -397,7 +391,6 @@ onMounted(() => {
   }
 }
 
-/* Mobile: full-screen panel from sidebar edge */
 @media (max-width: 900px) {
   .ss-panel {
     left: 60px;
